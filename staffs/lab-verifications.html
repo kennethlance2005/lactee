@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HMBMS | Lab Verifications</title>
+    <link rel="stylesheet" href="../styles.css">
+</head>
+<body class="dashboard-body">
+    
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h2>HMBMS</h2>
+            <p>Staff Portal</p>
+        </div>
+        <nav class="sidebar-nav">
+            <ul>
+                <li><a href="staff-dashboard.html">Dashboard Summary</a></li>
+                <li><a href="inventory-scanner.html">Inventory & Barcode</a></li>
+                <li><a href="lab-verifications.html" class="active">Lab Verifications</a></li>
+                <li><a href="safe-dispensing.html">Safe Dispensing</a></li>
+                <li><a href="donor-management.html">Donor Profiles</a></li>
+                <li><a href="reports.html">Reports</a></li>
+            </ul>
+        </nav>
+        <div class="sidebar-footer">
+            <p>Logged in as: <strong>Nurse Clara</strong></p>
+            <a href="login.html" class="logout-btn">Secure Logout</a>
+        </div>
+    </aside>
+
+    <main class="dashboard-main">
+        <header class="dashboard-header">
+            <h1>Laboratory Verifications</h1>
+            <p>Log medical test results for pending milk batches and donor screenings.</p>
+        </header>
+
+        <section class="batch-details-section">
+            <div class="batch-card">
+                <h2>Record Batch Test Result</h2>
+                <form action="/api/log-lab-test" method="POST" class="standard-form update-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="batch_id">Batch Barcode ID</label>
+                            <input type="text" id="batch_id" name="batch_id" placeholder="Scan or type Batch ID" required autofocus>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="test_result">Bacteriological Test Result</label>
+                            <select id="test_result" name="test_result" required>
+                                <option value="">Select outcome...</option>
+                                <option value="Passed">Passed (Safe for Dispensing)</option>
+                                <option value="Failed">Failed (Requires Discarding)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-primary">Submit & Update Batch State</button>
+                </form>
+            </div>
+        </section>
+
+        <section class="activity-section" style="margin-top: 3rem;">
+            <h2>Pending Batch Verifications</h2>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Batch ID</th>
+                        <th>Program</th>
+                        <th>Date Collected</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>#8501</td>
+                        <td>Milky Way</td>
+                        <td>Oct 24, 2026</td>
+                        <td><span class="badge badge-pasteurized">Awaiting Lab</span></td>
+                    </tr>
+                    <tr>
+                        <td>#8502</td>
+                        <td>Supsup Todo</td>
+                        <td>Oct 24, 2026</td>
+                        <td><span class="badge badge-pasteurized">Awaiting Lab</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+    </main>
+</body>
+</html>

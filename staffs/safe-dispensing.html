@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HMBMS | Safe Dispensing</title>
+    <link rel="stylesheet" href="../styles.css">
+</head>
+<body class="dashboard-body">
+    
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h2>HMBMS</h2>
+            <p>Staff Portal</p>
+        </div>
+        <nav class="sidebar-nav">
+            <ul>
+                <li><a href="staff-dashboard.html">Dashboard Summary</a></li>
+                <li><a href="inventory-scanner.html">Inventory & Barcode</a></li>
+                <li><a href="lab-verifications.html">Lab Verifications</a></li>
+                <li><a href="safe-dispensing.html" class="active">Safe Dispensing</a></li>
+                <li><a href="donor-management.html">Donor Profiles</a></li>
+                <li><a href="reports.html">Reports</a></li>
+            </ul>
+        </nav>
+        <div class="sidebar-footer">
+            <p>Logged in as: <strong>Nurse Clara</strong></p>
+            <a href="login.html" class="logout-btn">Secure Logout</a>
+        </div>
+    </aside>
+
+    <main class="dashboard-main">
+        <header class="dashboard-header">
+            <h1>Safe Dispensing Gateway</h1>
+            <p style="color: #DC2626; font-weight: 600;">Strict Protocol: Ensure all IDs match perfectly. Only "Passed Lab Test" batches may be dispensed.</p>
+        </header>
+
+        <section class="batch-details-section">
+            <div class="batch-card" style="border-top-color: #059669;">
+                <h2>Process Prescription Fulfillment</h2>
+                <form action="/api/dispense-milk" method="POST" class="standard-form update-form">
+                    
+                    <fieldset>
+                        <legend>1. Beneficiary Validation</legend>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="inquiry_id">Inquiry Ticket / Beneficiary ID</label>
+                                <input type="text" id="inquiry_id" name="inquiry_id" placeholder="e.g., INQ-10294" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="prescription_id">Doctor's Prescription ID</label>
+                                <input type="text" id="prescription_id" name="prescription_id" placeholder="Scan or type Rx ID" required>
+                            </div>
+                        </div>
+                    </fieldset>
+
+                    <fieldset style="margin-top: 1.5rem;">
+                        <legend>2. Inventory Validation</legend>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="batch_barcode">Scan Physical Milk Batch Barcode</label>
+                                <input type="text" id="batch_barcode" name="batch_barcode" placeholder="Scan bottle..." required>
+                            </div>
+                        </div>
+                    </fieldset>
+
+                    <button type="submit" class="btn-primary btn-full" style="background-color: #059669;">Verify Match & Dispense Milk</button>
+                </form>
+            </div>
+        </section>
+    </main>
+</body>
+</html>

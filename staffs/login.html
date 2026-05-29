@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HMBMS | Secure Login</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="../styles.css">
 </head>
 <body class="login-body">
     <div class="login-container">
@@ -13,7 +13,7 @@
             <p>Authorized Medical Staff & Administrators Only</p>
         </div>
         
-        <form class="login-form" action="/authenticate" method="POST">
+        <form id="loginForm" class="login-form">
             <div class="form-group">
                 <label for="username">Username</label>
                 <input type="text" id="username" name="username" required placeholder="Enter your username">
@@ -29,8 +29,18 @@
         
         <div class="login-footer">
             <a href="#">Forgot Password?</a>
-            <p>Beneficiaries should use the <a href="index.html">Public Portal</a> for inquiries.</p>
+            <p>Guest <br><a href="../beneficiaries/index.html">Public Portal</a></p>
         </div>
     </div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', function(event) {
+            // Prevent the form from trying to send data to a server
+            event.preventDefault(); 
+            
+            // Redirect to the dashboard
+            window.location.href = 'staff-dashboard.html'; 
+        });
+    </script>
 </body>
 </html>

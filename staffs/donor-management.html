@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HMBMS | Donor Management</title>
+    <link rel="stylesheet" href="../styles.css">
+</head>
+<body class="dashboard-body">
+    
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h2>HMBMS</h2>
+            <p>Staff Portal</p>
+        </div>
+        <nav class="sidebar-nav">
+            <ul>
+                <li><a href="staff-dashboard.html">Dashboard Summary</a></li>
+                <li><a href="inventory-scanner.html">Inventory & Barcode</a></li>
+                <li><a href="lab-verifications.html">Lab Verifications</a></li>
+                <li><a href="safe-dispensing.html">Safe Dispensing</a></li>
+                <li><a href="donor-management.html" class="active">Donor Profiles</a></li>
+                <li><a href="reports.html">Reports</a></li>
+            </ul>
+        </nav>
+        <div class="sidebar-footer">
+            <p>Logged in as: <strong>Nurse Clara</strong></p>
+            <a href="login.html" class="logout-btn">Secure Logout</a>
+        </div>
+    </aside>
+
+    <main class="dashboard-main">
+        <header class="dashboard-header">
+            <h1>Donor Profiles & Applications</h1>
+            <p>Review public applications and finalize official Donor Tracking Numbers (DTN).</p>
+        </header>
+
+        <section class="activity-section">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h2>Pending Public Applications</h2>
+                <button class="btn-primary" style="padding: 0.4rem 1rem;">+ Register Walk-In Donor</button>
+            </div>
+            
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Application ID</th>
+                        <th>Applicant Name</th>
+                        <th>Infant Age</th>
+                        <th>Contact Number</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>APP-9938</td>
+                        <td>Maria Santos</td>
+                        <td>4 Months</td>
+                        <td>0917-555-0192</td>
+                        <td><a href="#" class="btn-secondary" style="font-size: 0.8rem; padding: 0.3rem 0.8rem;">Review & Screen</a></td>
+                    </tr>
+                    <tr>
+                        <td>APP-9939</td>
+                        <td>Elena Cruz</td>
+                        <td>2 Months</td>
+                        <td>0918-444-9921</td>
+                        <td><a href="#" class="btn-secondary" style="font-size: 0.8rem; padding: 0.3rem 0.8rem;">Review & Screen</a></td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section class="activity-section" style="margin-top: 3rem;">
+            <h2>Verified Active Donors</h2>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>DTN</th>
+                        <th>Name</th>
+                        <th>Status</th>
+                        <th>Registered Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>DTN-2026-884</strong></td>
+                        <td>Jasmin Reyes</td>
+                        <td><span class="badge badge-passed">Cleared</span></td>
+                        <td>Oct 10, 2026</td>
+                    </tr>
+                    <tr>
+                        <td><strong>DTN-2026-885</strong></td>
+                        <td>Chloe Lim</td>
+                        <td><span class="badge badge-passed">Cleared</span></td>
+                        <td>Oct 12, 2026</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+    </main>
+</body>
+</html>
