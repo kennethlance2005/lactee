@@ -35,33 +35,10 @@
             <p>Log medical test results for pending milk batches and donor screenings.</p>
         </header>
 
-        <section class="batch-details-section">
-            <div class="batch-card">
-                <h2>Record Batch Test Result</h2>
-                <form action="/api/log-lab-test" method="POST" class="standard-form update-form">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="batch_id">Batch Barcode ID</label>
-                            <input type="text" id="batch_id" name="batch_id" placeholder="Scan or type Batch ID" required autofocus>
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="test_result">Bacteriological Test Result</label>
-                            <select id="test_result" name="test_result" required>
-                                <option value="">Select outcome...</option>
-                                <option value="Passed">Passed (Safe for Dispensing)</option>
-                                <option value="Failed">Failed (Requires Discarding)</option>
-                            </select>
-                        </div>
-                    </div>
-                    <button type="submit" class="btn-primary">Submit & Update Batch State</button>
-                </form>
-            </div>
-        </section>
-
-        <section class="activity-section" style="margin-top: 3rem;">
+        <section class="activity-section" style="margin-top: 1rem;">
             <h2>Pending Batch Verifications</h2>
+            <p>Assign batches to a specific lab and update their bacteriological test results.</p>
+            
             <table class="data-table">
                 <thead>
                     <tr>
@@ -69,20 +46,32 @@
                         <th>Program</th>
                         <th>Date Collected</th>
                         <th>Status</th>
+                        <th>Test Result</th>
+                        <th>Action</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
-                        <td>#8501</td>
+                        <td><strong>#8501</strong></td>
                         <td>Milky Way</td>
                         <td>Oct 24, 2026</td>
-                        <td><span class="badge badge-pasteurized">Awaiting Lab</span></td>
-                    </tr>
-                    <tr>
-                        <td>#8502</td>
-                        <td>Supsup Todo</td>
-                        <td>Oct 24, 2026</td>
-                        <td><span class="badge badge-pasteurized">Awaiting Lab</span></td>
+                        <td>
+                            <select class="lab-select" name="lab_8501" required>
+                                <option value="" disabled selected>Select Lab...</option>
+                                <option value="pasteurization">Testing for Pasteurization</option>
+                                <option value="storing">Testing for Storing Conditions</option>
+                            </select>
+                        </td>
+                        <td>
+                            <select class="status-select" name="status_8501" required>
+                                <option value="awaiting" selected>Awaiting Lab</option>
+                                <option value="passed">Passed</option>
+                                <option value="failed">Failed (Discard)</option>
+                            </select>
+                        </td>
+                        <td>
+                            <button type="button" class="btn-primary" style="padding: 0.5rem 1rem; font-size: 0.9rem;">Save Update</button>
+                        </td>
                     </tr>
                 </tbody>
             </table>
