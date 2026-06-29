@@ -23,7 +23,7 @@
             <h2>Request Human Milk</h2>
             <p class="form-subtitle">Please provide your details below. <strong>We will send all status updates and availability alerts directly to your phone via SMS.</strong></p>
             
-            <form action="/submit-inquiry" method="POST" class="standard-form">
+            <form id="request-form" action="/submit-inquiry" method="POST" class="standard-form">
                 
                 <fieldset>
                     <legend>Beneficiary Details</legend>
@@ -72,8 +72,45 @@
                 </fieldset>
 
                 <button type="submit" class="btn-primary btn-full">Submit Request</button>
+                <p id="form-message" class="form-subtitle" style="margin-top: 1rem;"></p>
             </form>
         </div>
     </section>
+
+    <script>
+        const form = document.getElementById('request-form');
+        const messageBox = document.getElementById('form-message');
+
+        form.addEventListener('submit', async function (event) {
+            event.preventDefault();
+            const formData = new FormData(form);
+            const payload = Object.fromEntries(formData.entries());
+
+            messageBox.textContent = 'Submitting request...';
+            messageBox.style.color = '#4a5568';
+
+            try {
+                const response = await fetch('/submit-inquiry', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    messageBox.textContent = 'Request received. SMS updates are being prepared.';
+                    messageBox.style.color = '#2f855a';
+                    form.reset();
+                } else {
+                    messageBox.textContent = result.message || 'Submission failed.';
+                    messageBox.style.color = '#c53030';
+                }
+            } catch (error) {
+                messageBox.textContent = 'Submission failed. Please try again later.';
+                messageBox.style.color = '#c53030';
+            }
+        });
+    </script>
 </body>
 </html>

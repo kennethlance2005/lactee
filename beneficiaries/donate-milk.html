@@ -23,7 +23,7 @@
             <h2>Become a Mother-Donor</h2>
             <p class="form-subtitle">Your donation can save lives. Please complete this preliminary screening form. A temporary Application ID will be generated for your hospital lab screening.</p>
             
-            <form action="/submit-donor-profile" method="POST" class="standard-form">
+            <form id="donor-form" action="/submit-donor-profile" method="POST" class="standard-form">
                 
                 <fieldset>
                     <legend>Personal Details</legend>
@@ -66,8 +66,45 @@
                 </fieldset>
 
                 <button type="submit" class="btn-primary btn-full">Submit Application</button>
+                <p id="donor-form-message" class="form-subtitle" style="margin-top: 1rem;"></p>
             </form>
         </div>
     </section>
+
+    <script>
+        const donorForm = document.getElementById('donor-form');
+        const donorMessage = document.getElementById('donor-form-message');
+
+        donorForm.addEventListener('submit', async function (event) {
+            event.preventDefault();
+            const formData = new FormData(donorForm);
+            const payload = Object.fromEntries(formData.entries());
+
+            donorMessage.textContent = 'Submitting donor application...';
+            donorMessage.style.color = '#4a5568';
+
+            try {
+                const response = await fetch('/submit-donor-profile', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    donorMessage.textContent = 'Application received. We will contact you after screening.';
+                    donorMessage.style.color = '#2f855a';
+                    donorForm.reset();
+                } else {
+                    donorMessage.textContent = result.message || 'Submission failed.';
+                    donorMessage.style.color = '#c53030';
+                }
+            } catch (error) {
+                donorMessage.textContent = 'Submission failed. Please try again later.';
+                donorMessage.style.color = '#c53030';
+            }
+        });
+    </script>
 </body>
 </html>
