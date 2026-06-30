@@ -3,113 +3,330 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HMBMS | Request Milk</title>
-    <link rel="stylesheet" href="../styles.css">
+    <title>HMBMS | Donate Milk</title>
+    <style>
+        /* Base Styles */
+        body { font-family: system-ui, -apple-system, sans-serif; color: #2d3748; line-height: 1.5; padding: 20px; }
+        .form-section { max-width: 800px; margin: 0 auto; }
+        .program-options { display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1.5rem; }
+        .program-card { border: 1px solid #cbd5e0; padding: 1rem; border-radius: 8px; cursor: pointer; transition: all 0.2s; }
+        .program-card:hover { border-color: #4a5568; }
+        .program-card.selected { border-color: #3182ce; background-color: #ebf8ff; }
+        .program-card input[type="radio"] { margin-right: 10px; }
+        .program-details { font-size: 0.85rem; color: #718096; margin-left: 25px; margin-top: 4px; }
+        .step-header { margin-top: 2rem; margin-bottom: 1.5rem; padding-bottom: 0.5rem; border-bottom: 2px solid #e2e8f0; }
+        
+        /* Flow Containers - Hidden by default */
+        .flow-container { display: none; }
+        .flow-container.active { display: block; }
+
+        /* Form Layout */
+        fieldset { border: 1px solid #e2e8f0; border-radius: 6px; padding: 1.5rem; margin-bottom: 1.5rem; }
+        legend { font-weight: bold; color: #4a5568; padding: 0 5px; }
+        .form-row-3, .form-row-2 { display: flex; gap: 1rem; margin-bottom: 1rem; }
+        .form-row-3 > .form-group, .form-row-2 > .form-group { flex: 1; }
+        .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 500; font-size: 0.9rem; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 0.5rem; border: 1px solid #cbd5e0; border-radius: 4px; box-sizing: border-box; }
+        .checkbox-group label { display: block; margin-bottom: 0.5rem; font-weight: normal; }
+        .btn-primary { background-color: #3182ce; color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; }
+        .btn-primary:hover { background-color: #2b6cb0; }
+    </style>
 </head>
 <body>
-    <header class="navbar">
-        <div class="logo">HMBMS</div>
-        <nav>
-            <ul>
-                <li><a href="index.html">Home</a></li>
-                <li><a href="donate.html">Donate Milk</a></li>
-                <li><a href="status-check.html">Check Request Status</a></li>
-            </ul>
-        </nav>
-    </header>
-
     <section class="form-section">
         <div class="form-container">
-            <h2>Request Human Milk</h2>
-            <p class="form-subtitle">Please provide your details below. <strong>We will send all status updates and availability alerts directly to your phone via SMS.</strong></p>
+            <h2>Become a Mother-Donor</h2>
+            <p class="form-subtitle">Your donation can save lives. Please select a program to view your registration requirements.</p>
             
-            <form id="request-form" action="/submit-inquiry" method="POST" class="standard-form">
+            <form id="donor-form" action="/submit-donor-profile" method="POST">
                 
-                <fieldset>
-                    <legend>Beneficiary Details</legend>
-                    
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="mother_name">Mother's Full Name</label>
-                            <input type="text" id="mother_name" name="mother_name" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="contact_number">Contact Number (For SMS Updates)</label>
-                            <input type="tel" id="contact_number" name="contact_number" placeholder="e.g., 09123456789" required>
-                        </div>
+                <!-- STEP 1: Program Selection -->
+                <div id="step-1">
+                    <div class="step-header" style="margin-top: 0;">
+                        <h3>Step 1: Select Donor Program Category</h3>
                     </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="infant_name">Infant's Full Name</label>
-                            <input type="text" id="infant_name" name="infant_name" required>
-                        </div>
-                        <div class="form-group checkbox-group">
-                            <input type="checkbox" id="is_nicu" name="is_nicu">
-                            <label for="is_nicu">Is the infant currently admitted to the NICU?</label>
-                        </div>
-                    </div>
-                </fieldset>
-
-                <fieldset>
-                    <legend>Request Details</legend>
                     
-                    <div class="form-row">
+                    <div class="program-options">
+                        <label class="program-card">
+                            <input type="radio" name="program_category" value="supsup_todo" required>
+                            <strong>Supsup Todo (Community-Based Program)</strong>
+                            <div class="program-details">* Requires a physical laboratory screening at the milk bank facility.</div>
+                        </label>
+
+                        <label class="program-card">
+                            <input type="radio" name="program_category" value="milky_way">
+                            <strong>Milky-Way (Hospital-Based Program)</strong>
+                            <div class="program-details">* Utilizes synced facility health records. No separate lab screening required.</div>
+                        </label>
+
+                        <label class="program-card">
+                            <input type="radio" name="program_category" value="moms_act">
+                            <strong>Mom's Act (Household-Based Program)</strong>
+                            <div class="program-details">* Only requires a call reference/verification.</div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- ========================================== -->
+                <!-- FLOW A: SUPSUP TODO (Community-Based)      -->
+                <!-- ========================================== -->
+                <div id="flow-supsup" class="flow-container">
+                    <div class="step-header">
+                        <h3>Step 2: Profile & Identity (Community)</h3>
+                    </div>
+                    <fieldset>
+                        <legend>Personal Information</legend>
+                        <div class="form-row-3">
+                            <div class="form-group"><label>First Name</label><input type="text" name="st_first_name"></div>
+                            <div class="form-group"><label>Middle Name</label><input type="text" name="st_middle_name" data-optional="true"></div>
+                            <div class="form-group"><label>Last Name</label><input type="text" name="st_last_name"></div>
+                        </div>
+                        <div class="form-row-2">
+                            <div class="form-group"><label>Cellphone Number</label><input type="tel" name="st_contact_number"></div>
+                            <div class="form-group"><label>Birth Date</label><input type="date" name="st_birth_date"></div>
+                        </div>
+                    </fieldset>
+
+                    <div class="step-header">
+                        <h3>Step 3: Registration Location Site</h3>
+                    </div>
+                    <fieldset>
+                        <legend>Makati Barangay Health-Center</legend>
                         <div class="form-group">
-                            <label for="required_milk_type">Required Milk Type</label>
-                            <select id="required_milk_type" name="required_milk_type" required>
-                                <option value="">Select type...</option>
-                                <option value="Preterm">Preterm</option>
-                                <option value="Term">Term</option>
+                            <label for="barangay_site">Select Barangay Site</label>
+                            <select id="barangay_site" name="st_barangay_site">
+                                <option value="" disabled selected>Select a Barangay Health Center...</option>
+                                <option value="Poblacion">Poblacion Health Center</option>
+                                <option value="Valenzuela">Valenzuela Health Center</option>
+                                <option value="Bel-Air">Bel-Air Health Center</option>
+                                <option value="San Lorenzo">San Lorenzo Health Center</option>
+                                <option value="San Antonio">San Antonio Health Center</option>
+                                <option value="Guadalupe Nuevo">Guadalupe Nuevo Health Center</option>
+                                <option value="Guadalupe Viejo">Guadalupe Viejo Health Center</option>
+                                <option value="Pembo">Pembo Health Center</option>
+                                <option value="Comembo">Comembo Health Center</option>
                             </select>
                         </div>
-                    </div>
+                    </fieldset>
+                    <fieldset>
+                        <legend>Screening Validation</legend>
+                        <div class="checkbox-group">
+                            <label><input type="checkbox" name="st_passed_lab"> Passed preliminary lab screening tests</label>
+                            <label><input type="checkbox" name="st_digital_consent"> I digitally consent to the validation of this registration.</label>
+                        </div>
+                    </fieldset>
+                    <button type="submit" class="btn-primary">Submit Application</button>
+                </div>
 
-                    <div class="form-group full-width">
-                        <label for="medical_notes">Additional Medical Notes (Optional)</label>
-                        <textarea id="medical_notes" name="medical_notes" rows="3" placeholder="Any specific dietary requirements or medical context..."></textarea>
+                <!-- ========================================== -->
+                <!-- FLOW B: MILKY-WAY (Hospital-Based)         -->
+                <!-- ========================================== -->
+                <div id="flow-milkyway" class="flow-container">
+                    <div class="step-header">
+                        <h3>Step 2: Identity & Hospital Linkage</h3>
                     </div>
-                </fieldset>
+                    <fieldset>
+                        <legend>Record Verification</legend>
+                        <div class="form-row-2">
+                            <div class="form-group"><label>First Name</label><input type="text" name="mw_first_name"></div>
+                            <div class="form-group"><label>Last Name</label><input type="text" name="mw_last_name"></div>
+                        </div>
+                        <div class="form-row-2">
+                            <div class="form-group">
+                                <label>Patient ID / Hospital Record Number</label>
+                                <input type="text" name="mw_patient_id" placeholder="e.g., PAT-123456">
+                            </div>
+                            <div class="form-group">
+                                <label>Select Primary Milk Bank Facility</label>
+                                <select name="mw_hospital_site">
+                                    <option value="" disabled selected>Select facility...</option>
+                                    <option value="Ospital_ng_Makati">Ospital ng Makati (OsMak)</option>
+                                    <option value="Makati_Medical_Center">Makati Medical Center</option>
+                                </select>
+                            </div>
+                        </div>
+                    </fieldset>
 
-                <button type="submit" class="btn-primary btn-full">Submit Request</button>
-                <p id="form-message" class="form-subtitle" style="margin-top: 1rem;"></p>
+                    <div class="step-header">
+                        <h3>Step 3: Data Privacy & Record Sync</h3>
+                    </div>
+                    <fieldset>
+                        <legend>Health Record Authorization</legend>
+                        <p style="font-size: 0.9rem; color: #4a5568; margin-bottom: 1rem;">
+                            To bypass physical lab screening, HMBMS needs to verify your recent infectious disease screening results (HIV, Syphilis, Hepatitis B/C) directly with your selected hospital.
+                        </p>
+                        <div class="checkbox-group">
+                            <label>
+                                <input type="checkbox" name="mw_sync_consent"> 
+                                <strong>I authorize</strong> HMBMS to securely request and sync my medical screening records from the selected facility for the sole purpose of milk donor qualification.
+                            </label>
+                        </div>
+                    </fieldset>
+                    <button type="submit" class="btn-primary">Submit Application</button>
+                </div>
+
+                <!-- ========================================== -->
+                <!-- FLOW C: MOM'S ACT (Household-Based)        -->
+                <!-- ========================================== -->
+                <div id="flow-momsact" class="flow-container">
+                    <div class="step-header">
+                        <h3>Step 2: Profile & Communication Details</h3>
+                    </div>
+                    <fieldset>
+                        <legend>Personal Information</legend>
+                        <div class="form-row-3">
+                            <div class="form-group"><label>First Name</label><input type="text" name="ma_first_name"></div>
+                            <div class="form-group"><label>Middle Name</label><input type="text" name="ma_middle_name" data-optional="true"></div>
+                            <div class="form-group"><label>Last Name</label><input type="text" name="ma_last_name"></div>
+                        </div>
+                        <div class="form-group">
+                            <label>Household Address</label>
+                            <textarea name="ma_home_address" rows="2" placeholder="House/Unit No., Street, Barangay, City..."></textarea>
+                        </div>
+                        <div class="form-row-3">
+                            <div class="form-group"><label>Primary Cellphone</label><input type="tel" name="ma_contact_number"></div>
+                            <div class="form-group"><label>Alternative Contact</label><input type="tel" name="ma_alt_contact" data-optional="true" placeholder="Optional"></div>
+                            <div class="form-group">
+                                <label>Preferred Call Schedule</label>
+                                <select name="ma_call_schedule">
+                                    <option value="" disabled selected>Select best time to call...</option>
+                                    <option value="Morning (8AM - 12PM)">Morning (8AM - 12PM)</option>
+                                    <option value="Afternoon (1PM - 5PM)">Afternoon (1PM - 5PM)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </fieldset>
+
+                    <div class="step-header">
+                        <h3>Step 3: Reference & Tele-Screening Consent</h3>
+                    </div>
+                    <fieldset>
+                        <legend>Health Reference (Optional)</legend>
+                        <p style="font-size: 0.9rem; color: #4a5568; margin-bottom: 1rem;">
+                            Provide contact details of a healthcare provider (OB-GYN, Pediatrician, or Barangay Health Worker) who can vouch for your health status.
+                        </p>
+                        <div class="form-row-2">
+                            <div class="form-group">
+                                <label>Provider Name & Title</label>
+                                <input type="text" name="ma_ref_name" data-optional="true" placeholder="e.g., Dr. Jane Doe (Pediatrician)">
+                            </div>
+                            <div class="form-group">
+                                <label>Provider Contact Number</label>
+                                <input type="tel" name="ma_ref_contact" data-optional="true" placeholder="Optional">
+                            </div>
+                        </div>
+                    </fieldset>
+
+                    <fieldset>
+                        <legend>Call Consent Validation</legend>
+                        <div class="checkbox-group">
+                            <label>
+                                <input type="checkbox" name="ma_call_consent"> 
+                                <strong>I consent</strong> to participate in a verbal medical tele-screening interview via phone call, and I confirm that the information I provide will be true and accurate.
+                            </label>
+                        </div>
+                    </fieldset>
+                    <button type="submit" class="btn-primary">Submit Application</button>
+                </div>
+
+                <p id="donor-form-message" style="margin-top: 1rem; text-align: center;"></p>
             </form>
         </div>
     </section>
 
     <script>
-        const form = document.getElementById('request-form');
-        const messageBox = document.getElementById('form-message');
+        const donorForm = document.getElementById('donor-form');
+        const programRadios = document.querySelectorAll('input[name="program_category"]');
+        const programCards = document.querySelectorAll('.program-card');
+        
+        const flowSupsup = document.getElementById('flow-supsup');
+        const flowMilkyway = document.getElementById('flow-milkyway');
+        const flowMomsAct = document.getElementById('flow-momsact');
 
-        form.addEventListener('submit', async function (event) {
-            event.preventDefault();
-            const formData = new FormData(form);
-            const payload = Object.fromEntries(formData.entries());
+        // Toggle form paths based on selection
+        programRadios.forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                // Update card UI
+                programCards.forEach(card => card.classList.remove('selected'));
+                e.target.closest('.program-card').classList.add('selected');
 
-            messageBox.textContent = 'Submitting request...';
-            messageBox.style.color = '#4a5568';
+                // Hide all flows first
+                flowSupsup.classList.remove('active');
+                flowMilkyway.classList.remove('active');
+                flowMomsAct.classList.remove('active');
 
-            try {
-                const response = await fetch('/submit-inquiry', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-
-                const result = await response.json();
-
-                if (result.success) {
-                    messageBox.textContent = 'Request received. SMS updates are being prepared.';
-                    messageBox.style.color = '#2f855a';
-                    form.reset();
-                } else {
-                    messageBox.textContent = result.message || 'Submission failed.';
-                    messageBox.style.color = '#c53030';
+                // Show appropriate flow & manage required attributes
+                if (e.target.value === 'supsup_todo') {
+                    flowSupsup.classList.add('active');
+                    toggleRequired(flowSupsup, true);
+                    toggleRequired(flowMilkyway, false);
+                    toggleRequired(flowMomsAct, false);
+                } else if (e.target.value === 'milky_way') {
+                    flowMilkyway.classList.add('active');
+                    toggleRequired(flowMilkyway, true);
+                    toggleRequired(flowSupsup, false);
+                    toggleRequired(flowMomsAct, false);
+                } else if (e.target.value === 'moms_act') {
+                    flowMomsAct.classList.add('active');
+                    toggleRequired(flowMomsAct, true);
+                    toggleRequired(flowSupsup, false);
+                    toggleRequired(flowMilkyway, false);
                 }
-            } catch (error) {
-                messageBox.textContent = 'Submission failed. Please try again later.';
-                messageBox.style.color = '#c53030';
+            });
+        });
+
+        // Helper function to dynamically add/remove HTML 'required' attributes
+        function toggleRequired(container, isRequired) {
+            const inputs = container.querySelectorAll('input, select, textarea');
+            inputs.forEach(input => {
+                // Check if the input is marked as optional via dataset
+                const isOptional = input.dataset.optional === "true";
+
+                if (isRequired && input.type !== 'checkbox' && !isOptional) {
+                    input.setAttribute('required', 'true');
+                } else {
+                    input.removeAttribute('required');
+                }
+                
+                // Explicitly require checkboxes that are for consent
+                if (isRequired && (
+                    input.name === 'st_digital_consent' || 
+                    input.name === 'mw_sync_consent' ||
+                    input.name === 'ma_call_consent'
+                )) {
+                    input.setAttribute('required', 'true');
+                }
+            });
+        }
+
+        // Handle Submission
+        donorForm.addEventListener('submit', async function (event) {
+            event.preventDefault();
+            
+            const formData = new FormData(donorForm);
+            const activeCategory = formData.get('program_category');
+            
+            // Filter payload to only include data from the active program flow
+            const payload = { program_category: activeCategory };
+            
+            for (let [key, value] of formData.entries()) {
+                if (activeCategory === 'supsup_todo' && key.startsWith('st_')) payload[key] = value;
+                if (activeCategory === 'milky_way' && key.startsWith('mw_')) payload[key] = value;
+                if (activeCategory === 'moms_act' && key.startsWith('ma_')) payload[key] = value;
             }
+
+            // Checkbox logic for payload (un-checked boxes don't show up in FormData naturally)
+            if (activeCategory === 'supsup_todo') {
+                payload.st_passed_lab = formData.has('st_passed_lab');
+                payload.st_digital_consent = formData.has('st_digital_consent');
+            } else if (activeCategory === 'milky_way') {
+                payload.mw_sync_consent = formData.has('mw_sync_consent');
+            } else if (activeCategory === 'moms_act') {
+                payload.ma_call_consent = formData.has('ma_call_consent');
+            }
+
+            console.log("Submitting payload:", payload);
+            document.getElementById('donor-form-message').textContent = "Form payload ready! Check browser console.";
         });
     </script>
 </body>
