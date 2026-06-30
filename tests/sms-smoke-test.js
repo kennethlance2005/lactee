@@ -1,5 +1,5 @@
 const assert = require('assert');
-const { buildMessage, normalizePhone } = require('../server');
+const { buildMessage, normalizePhone } = require('../assets/js/server');
 
 const samplePayload = {
   contact_number: '09123456789',
