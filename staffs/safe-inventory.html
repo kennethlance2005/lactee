@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HMBMS | Safe Inventory</title>
+    <style>
+        /* (Use the same standard CSS block as above) */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background-color: #F8FAFC; color: #334155; line-height: 1.6; display: flex; min-height: 100vh; }
+        .sidebar { width: 250px; background-color: #1E293B; color: white; display: flex; flex-direction: column; position: fixed; height: 100vh; }
+        .sidebar-header { padding: 1.5rem; border-bottom: 1px solid #334155; }
+        .sidebar-header h2 { color: #38BDF8; margin-bottom: 0.2rem; }
+        .sidebar-nav { flex-grow: 1; padding: 1.5rem 0; list-style: none; }
+        .sidebar-nav a { display: block; padding: 0.8rem 1.5rem; color: #CBD5E1; text-decoration: none; transition: background 0.2s; }
+        .sidebar-nav a:hover, .sidebar-nav a.active { background-color: #334155; color: white; border-left: 4px solid #38BDF8; }
+        .dashboard-main { flex-grow: 1; margin-left: 250px; padding: 2.5rem 4%; }
+        .dashboard-header { margin-bottom: 2.5rem; }
+        .dashboard-header h1 { color: #0F172A; }
+        
+        .btn-primary { padding: 0.5rem 1rem; border-radius: 4px; border: none; background-color: #10B981; color: white; font-weight: bold; cursor: pointer; }
+        
+        /* Stats Dashboard */
+        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-bottom: 2.5rem; }
+        .stat-card { background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-left: 4px solid #10B981; }
+        .stat-card h3 { font-size: 0.9rem; color: #64748B; text-transform: uppercase; margin-bottom: 0.5rem; }
+        .stat-card .value { font-size: 2rem; font-weight: 700; color: #0F172A; }
+
+        /* Data Table */
+        .data-table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .data-table th, .data-table td { padding: 1rem; text-align: left; border-bottom: 1px solid #E2E8F0; }
+        .data-table th { background-color: #F1F5F9; font-weight: 600; color: #475569; }
+        .status-badge { background: #D1FAE5; color: #065F46; padding: 0.25rem 0.75rem; border-radius: 999px; font-size: 0.85rem; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h2>HMBMS</h2><p>Staff Portal</p>
+        </div>
+        <nav class="sidebar-nav">
+            <ul>
+                <li><a href="staff-dashboard.html">Dashboard Summary</a></li>
+                <li><a href="lab-verifications.html">Lab Verifications</a></li>
+                <li><a href="safe-inventory.html" class="active">Safe Inventory</a></li>
+                <li><a href="safe-dispensing.html">Safe Dispensing</a></li>
+                <li><a href="donor-management.html">Donor Profiles</a></li>
+                <li><a href="milk-batch-processing.html">Milk Batch Processing</a></li>
+            </ul>
+        </nav>
+    </aside>
+
+    <main class="dashboard-main">
+        <header class="dashboard-header">
+            <h1>Safe Milk Inventory</h1>
+            <p>View and dispatch milk that has passed laboratory testing.</p>
+        </header>
+
+        <section class="stats-grid">
+            <div class="stat-card">
+                <h3>Total Safe Volume</h3>
+                <div class="value">4,250 mL</div>
+            </div>
+            <div class="stat-card" style="border-left-color: #3B82F6;">
+                <h3>Available Batches</h3>
+                <div class="value">14</div>
+            </div>
+            <div class="stat-card" style="border-left-color: #F59E0B;">
+                <h3>Expiring Soon (< 30 days)</h3>
+                <div class="value">2</div>
+            </div>
+        </section>
+
+        <section>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Batch ID</th>
+                        <th>Volume (mL)</th>
+                        <th>Location</th>
+                        <th>Expiration Date</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>DTN-884-20260701</strong></td>
+                        <td>150 mL</td>
+                        <td>Freezer 1 - Shelf A</td>
+                        <td>Jan 01, 2027</td>
+                        <td><span class="status-badge">Available</span></td>
+                        <td><button class="btn-primary">Dispense</button></td>
+                    </tr>
+                    <tr>
+                        <td><strong>DTN-712-20260628</strong></td>
+                        <td>200 mL</td>
+                        <td>Freezer 2 - Shelf C</td>
+                        <td>Dec 28, 2026</td>
+                        <td><span class="status-badge">Available</span></td>
+                        <td><button class="btn-primary">Dispense</button></td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+    </main>
+</body>
+</html>
