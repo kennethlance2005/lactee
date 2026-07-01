@@ -12,6 +12,13 @@ body {
     line-height: 1.6;
 }
 
+.home-body {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #304d6d 0%, #a7cced 34%, #d8ebfb 62%, #ffffff 82%, #304d6d 100%);
+    background-size: 240% 240%;
+    animation: heroGradientShift 16s ease infinite;
+}
+
 /* Navigation Bar */
 .navbar {
     display: flex;
@@ -58,6 +65,20 @@ body {
     color: white !important;
 }
 
+.home-body .navbar .btn-primary {
+    background-color: #f0c808;
+    color: white !important;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.home-body .navbar .btn-primary:hover,
+.home-body .navbar .btn-primary:focus {
+    background-color: #f0c808;
+    color: white !important;
+    transform: translateY(-4px);
+    box-shadow: 0 0 28px rgba(240, 200, 8, 0.55), 0 12px 24px rgba(240, 200, 8, 0.28);
+}
+
 .btn-secondary {
     background-color: #F43F5E;
     color: white;
@@ -70,9 +91,34 @@ body {
 
 /* Hero Section */
 .hero {
-    background: linear-gradient(135deg, #E0F2FE 0%, #FFFFFF 100%);
+    background: linear-gradient(135deg, #304d6d 0%, #a7cced 34%, #d8ebfb 62%, #ffffff 82%, #304d6d 100%);
+    background-size: 240% 240%;
+    animation: heroGradientShift 16s ease infinite;
     padding: 5rem 5%;
     text-align: center;
+}
+
+@keyframes heroGradientShift {
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .home-body,
+    .hero {
+        animation: none;
+    }
+
+    .faq-card-inner {
+        transition: none;
+    }
 }
 
 .hero h1 {
@@ -86,6 +132,164 @@ body {
     max-width: 600px;
     margin: 0 auto 2rem auto;
     color: #64748B;
+}
+
+.hero .btn-secondary {
+    background-color: #f0c808;
+    color: white;
+    position: relative;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.hero .btn-secondary:hover,
+.hero .btn-secondary:focus {
+    background-color: #f0c808;
+    color: white;
+    transform: translateY(-4px);
+    box-shadow: 0 0 28px rgba(240, 200, 8, 0.55), 0 12px 24px rgba(240, 200, 8, 0.28);
+}
+
+/* FAQ Flip Cards */
+.faq {
+    padding-top: 2.5rem !important;
+    padding-bottom: 2.5rem !important;
+}
+
+.faq .container {
+    max-width: 1320px;
+    padding-top: 1rem !important;
+    padding-bottom: 1rem !important;
+}
+
+.faq .mb-5 {
+    margin-bottom: 1.75rem !important;
+}
+
+.faq-flip-list {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.faq-flip-card {
+    min-height: 230px;
+    cursor: pointer;
+    perspective: 1200px;
+    transition: transform 0.25s ease;
+}
+
+.faq-card-inner {
+    position: relative;
+    min-height: 230px;
+    transform-style: preserve-3d;
+    transition: transform 0.6s ease;
+}
+
+.faq-flip-card.is-flipped .faq-card-inner {
+    transform: rotateY(180deg);
+}
+
+.faq-flip-card.is-flipped .faq-card-face {
+    border-color: #a7cced;
+}
+
+.faq-card-face {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 1.25rem;
+    border-radius: 8px;
+    background: #FFFFFF;
+    backface-visibility: hidden;
+    overflow: hidden;
+    box-shadow: 0 16px 32px rgba(15, 23, 42, 0.12);
+    border: 1px solid #a7cced;
+    transition: box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.faq-card-front {
+    text-align: center;
+}
+
+.faq-card-front::after {
+    content: "+";
+    display: grid;
+    place-items: center;
+    flex: 0 0 36px;
+    width: 36px;
+    height: 36px;
+    margin-top: 1rem;
+    border-radius: 50%;
+    background: #a7cced;
+    color: white;
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.faq-card-back {
+    transform: rotateY(180deg);
+    background: linear-gradient(180deg, #a7cced 0%, #ffffff 100%);
+    color: #1E293B;
+}
+
+.faq-card-front h3 {
+    width: 100%;
+    margin: 0;
+    color: #1E293B;
+    font-size: 0.82rem;
+    font-weight: 700;
+    line-height: 1.25;
+    overflow: hidden;
+    overflow-wrap: anywhere;
+    text-align: center;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+}
+
+.faq-card-back p {
+    margin: 0;
+    font-size: 0.78rem;
+    line-height: 1.35;
+    text-align: center;
+}
+
+.faq-card-back a {
+    color: #2563EB;
+    font-weight: 700;
+}
+
+.faq-flip-card:hover .faq-card-face,
+.faq-flip-card:focus .faq-card-face {
+    box-shadow: 0 0 28px rgba(167, 204, 237, 0.7), 0 20px 38px rgba(48, 77, 109, 0.16);
+}
+
+.faq-flip-card.is-flipped:hover .faq-card-face,
+.faq-flip-card.is-flipped:focus .faq-card-face {
+    box-shadow: 0 0 30px rgba(167, 204, 237, 0.7), 0 20px 38px rgba(48, 77, 109, 0.18);
+}
+
+.faq-flip-card:hover,
+.faq-flip-card:focus {
+    transform: translateY(-6px);
+}
+
+.faq-flip-card:focus {
+    outline: none;
+}
+
+.faq-flip-card:focus .faq-card-face {
+    border-color: #a7cced;
+}
+
+.faq-flip-card.is-flipped .faq-card-face,
+.faq-flip-card.is-flipped:hover .faq-card-face,
+.faq-flip-card.is-flipped:focus .faq-card-face {
+    border-color: #a7cced;
 }
 
 /* Availability Section */
@@ -175,10 +379,44 @@ body {
 }
 
 /* Mobile Responsiveness */
+@media (max-width: 1200px) {
+    .faq-flip-list {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+    .faq-flip-card:nth-child(4) {
+        grid-column: 1 / span 1;
+    }
+    .faq-flip-card:nth-child(5) {
+        grid-column: 2 / span 1;
+    }
+}
+
 @media (max-width: 768px) {
     .navbar {
         flex-direction: column;
         gap: 1rem;
+    }
+    .faq {
+        padding-top: 2rem !important;
+        padding-bottom: 2rem !important;
+    }
+    .faq-flip-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .faq-flip-card:nth-child(4),
+    .faq-flip-card:nth-child(5) {
+        grid-column: auto;
+    }
+    .faq-flip-card,
+    .faq-card-inner {
+        min-height: 230px;
+    }
+    .faq-card-front h3 {
+        font-size: 0.78rem;
+        -webkit-line-clamp: 3;
+    }
+    .faq-card-back p {
+        font-size: 0.72rem;
     }
     .availability-form {
         flex-direction: column;
@@ -257,6 +495,20 @@ textarea {
 
 /* Mobile Adjustments for Forms */
 @media (max-width: 600px) {
+    .faq-flip-list {
+        grid-template-columns: 1fr;
+    }
+    .faq-flip-card,
+    .faq-card-inner {
+        min-height: 190px;
+    }
+    .faq-card-front h3 {
+        font-size: 0.95rem;
+        -webkit-line-clamp: 3;
+    }
+    .faq-card-back p {
+        font-size: 0.82rem;
+    }
     .form-row {
         flex-direction: column;
         gap: 1rem;

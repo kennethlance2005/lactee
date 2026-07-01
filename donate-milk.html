@@ -241,23 +241,9 @@
     </section>
 
     <script type="module">
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-        import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-        import { getFirestore, collection, addDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
-
-        const firebaseConfig = {
-            apiKey: 'AIzaSyCgtXZAe_-Wj0D4Pd-t2BYAU3E2faUF86M',
-            authDomain: 'hmbms-f70b5.firebaseapp.com',
-            projectId: 'hmbms-f70b5',
-            storageBucket: 'hmbms-f70b5.firebasestorage.app',
-            messagingSenderId: '276256441806',
-            appId: '1:276256441806:web:2e3db876c0dddbfb37979f',
-            measurementId: 'G-XD87JGC0MZ'
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
+        import { auth, db } from './assets/js/firebase-config.js';
+        import { signInAnonymously } from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js';
+        import { collection, addDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js';
 
         const donorForm = document.getElementById('donor-form');
         const programRadios = document.querySelectorAll('input[name="program_category"]');
@@ -323,9 +309,11 @@
             const msgEl = document.getElementById('donor-form-message');
 
             const payload = {
+                record_type: 'donor_profile',
                 program_category: activeCategory,
                 screening_status: 'Pending',
                 created_at: serverTimestamp(),
+                updated_at: serverTimestamp(),
                 source: 'public-donation',
                 first_name: '',
                 last_name: '',

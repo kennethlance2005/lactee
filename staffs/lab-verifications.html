@@ -17,9 +17,9 @@
         <nav class="sidebar-nav">
             <ul>
                 <li><a href="staff-dashboard.html">Dashboard Summary</a></li>
+                <li><a href="beneficiary-requests.html">Milk Requests</a></li>
                 <li><a href="lab-verifications.html" class="active">Lab Verifications</a></li>
                 <li><a href="safe-inventory.html">Safe Inventory</a></li>
-                <li><a href="safe-dispensing.html">Safe Dispensing</a></li>
                 <li><a href="donor-management.html">Donor Profiles</a></li>
                 <li><a href="milk-batch-processing.html">Milk Batch Processing</a></li>
             </ul>
@@ -45,7 +45,7 @@
                     <tr>
                         <th>Batch ID / Barcode</th>
                         <th>Program</th>
-                        <th>Status</th>
+                        <th>Lab Stage</th>
                         <th>Test Result</th>
                         <th>Action</th>
                     </tr>
@@ -56,6 +56,18 @@
             </table>
         </section>
     </main>
+    <style>
+        @media (max-width: 1024px) {
+            .sidebar { width: 200px; }
+            .dashboard-main { margin-left: 200px; padding: 1.5rem; }
+        }
+        @media (max-width: 768px) {
+            body { flex-direction: column; }
+            .sidebar { position: relative; width: 100%; height: auto; }
+            .dashboard-main { margin-left: 0; padding: 1rem; }
+            .data-table { display: block; overflow-x: auto; white-space: nowrap; }
+        }
+    </style>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -125,21 +137,23 @@ if(logoutBtn) {
                 pendingBatches.forEach(batch => {
                     const batchDocId = batch.id;
                     const data = batch;
+                    const currentStage = data.state || data.status || 'Pasteurization';
                     tbody.innerHTML += `
                         <tr id="row-${batchDocId}">
                             <td><strong>${window.LacteeBatchUtils.getBatchIdentifier(data)}</strong></td>
                             <td>${data.program_type || 'Unknown'}</td>
                             <td>
-                                <select class="lab-select" id="lab_${batchDocId}">
-                                    <option value="pasteurization">Testing for Pasteurization</option>
-                                    <option value="storing">Testing for Storing Conditions</option>
+                                <select class="stage-select" id="stage_${batchDocId}">
+                                    <option value="Pasteurization" ${currentStage === 'Pasteurization' ? 'selected' : ''}>Pasteurization</option>
+                                    <option value="Pre-Storage Check" ${currentStage === 'Pre-Storage Check' ? 'selected' : ''}>Pre-Storage Check</option>
+                                    <option value="Storage" ${currentStage === 'Storage' ? 'selected' : ''}>Storage</option>
                                 </select>
                             </td>
                             <td>
                                 <select class="status-select" id="status_${batchDocId}">
-                                    <option value="Pending" selected>Awaiting Lab</option>
-                                    <option value="Passed">Passed</option>
-                                    <option value="Failed">Failed (Discard)</option>
+                                    <option value="Waiting" ${data.lab_result === 'Waiting' ? 'selected' : ''}>Waiting</option>
+                                    <option value="Passed" ${data.lab_result === 'Passed' ? 'selected' : ''}>Passed</option>
+                                    <option value="Failed" ${data.lab_result === 'Failed' ? 'selected' : ''}>Failed</option>
                                 </select>
                             </td>
                             <td>
@@ -155,44 +169,47 @@ if(logoutBtn) {
         }
 
         window.updateLab = async function(docId) {
-            const result = document.getElementById(`status_${docId}`).value;
-            const testType = document.getElementById(`lab_${docId}`).value;
+const selectedStage = document.getElementById(`stage_${docId}`).value;
+                const result = document.getElementById(`status_${docId}`).value;
             
-            if(result === 'Pending') {
-                return alert("Please change the status to 'Passed' or 'Failed' before saving.");
-            }
+                if(result === 'Waiting') {
+                    return alert("Please choose 'Passed' or 'Failed' before saving.");
+                }
 
-            try {
-                const newState = result === 'Passed' ? 'Passed Lab Test' : 'Discarded';
-                
-                // 1. Update the Milk Batch document
-                await updateDoc(doc(db, "Milk_Batches", docId), {
-                    lab_result: result,
-                    state: newState
-                });
+                try {
+                    const newState = result === 'Passed' ? 'Passed' : 'Failed';
+                    const displayStatus = result === 'Passed' ? 'Passed' : 'Failed';
+
+                    // 1. Update the Milk Batch document
+                    await updateDoc(doc(db, "Milk_Batches", docId), {
+                        lab_result: result,
+                        state: newState,
+                        status: displayStatus,
+                        lab_stage: selectedStage
+                    });
 
                 // 2. Add log to Laboratory_Verifications
                 await addDoc(collection(db, "Laboratory_Verifications"), {
                     batch_id: docId,
-                    staff_id: "System_User", // Would normally come from Firebase Auth
+                    staff_id: window.currentUserEmail || 'Unknown',
                     test_result: result,
-                    test_type: testType,
+                    test_type: 'Pasteurization',
                     tested_at: serverTimestamp()
                 });
 
                 // 3. Add to Milk_State_Logs
                 await addDoc(collection(db, "Milk_State_Logs"), {
                     batch_id: docId,
-                    previous_state: "Pasteurized", // Assuming it came from pasteurization
+                    previous_state: 'Pasteurization',
                     new_state: newState,
-                    staff_id: "System_User",
+                    staff_id: window.currentUserEmail || 'Unknown',
                     timestamp: serverTimestamp()
                 });
 
                 // Remove row from UI
                 document.getElementById(`row-${docId}`).remove();
                 alert(`Batch ${docId} successfully marked as ${result}.`);
-                
+
             } catch (error) {
                 console.error("Error updating lab result:", error);
                 alert("An error occurred while saving the verification.");

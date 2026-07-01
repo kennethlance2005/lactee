@@ -27,18 +27,21 @@
     const labResult = normalizeValue(batch?.lab_result).toLowerCase();
 
     return (
+      state === 'pasteurization' ||
       state === 'received' ||
       state === 'pending' ||
       state === 'pending lab' ||
       screeningStatus === 'pending lab' ||
       screeningStatus === 'pending' ||
+      labResult === 'waiting' ||
       labResult === 'pending'
     );
   }
 
   function isReadyToDispenseBatch(batch) {
     const state = normalizeValue(batch?.state || batch?.status).toLowerCase();
-    return ['passed lab test', 'available', 'ready to dispense', 'passed'].includes(state);
+    const labResult = normalizeValue(batch?.lab_result).toLowerCase();
+    return ['passed lab test', 'available', 'ready to dispense', 'passed'].includes(state) || labResult === 'passed';
   }
 
   const api = {
