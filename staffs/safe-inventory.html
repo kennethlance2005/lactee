@@ -4,6 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HMBMS | Safe Inventory</title>
+<<<<<<< HEAD
+=======
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/css/styles.css">
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+>>>>>>> 526b85a (Co-authored-by: silas1218 <silas1218@users.noreply.github.com>)
     <style>
         /* (Use the same standard CSS block as above) */
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
@@ -27,10 +33,34 @@
         .stat-card .value { font-size: 2rem; font-weight: 700; color: #0F172A; }
 
         /* Data Table */
-        .data-table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        .data-table th, .data-table td { padding: 1rem; text-align: left; border-bottom: 1px solid #E2E8F0; }
+        .data-table { table-layout: fixed; width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .data-table th, .data-table td { padding: 1rem; vertical-align: middle; border-bottom: 1px solid #E2E8F0; }
         .data-table th { background-color: #F1F5F9; font-weight: 600; color: #475569; }
+        .data-table th:nth-child(1), .data-table td:nth-child(1) { width: 30%; }
+        .data-table th:nth-child(2), .data-table td:nth-child(2) { width: 20%; }
+        .data-table th:nth-child(3), .data-table td:nth-child(3) { width: 15%; }
+        .data-table th:nth-child(4), .data-table td:nth-child(4) { width: 15%; }
+        .data-table th:nth-child(5), .data-table td:nth-child(5) { width: 10%; }
+        .data-table th:nth-child(6), .data-table td:nth-child(6) { width: 10%; }
+        .data-table td { text-align: left; }
+        .data-table td:nth-child(6) { text-align: center; }
+        .data-table td:first-child { font-weight: 700; color: #0F172A; }
         .status-badge { background: #D1FAE5; color: #065F46; padding: 0.25rem 0.75rem; border-radius: 999px; font-size: 0.85rem; font-weight: bold; }
+        .btn-primary { padding: 0.5rem 1rem; border-radius: 6px; }
+    </style>
+
+    <style>
+        @media (max-width: 1024px) {
+            .sidebar { width: 200px; }
+            .dashboard-main { margin-left: 200px; padding: 1.5rem; }
+        }
+        @media (max-width: 768px) {
+            body { flex-direction: column; }
+            .sidebar { position: relative; width: 100%; height: auto; }
+            .dashboard-main { margin-left: 0; padding: 1rem; }
+            .data-table { display: block; overflow-x: auto; white-space: nowrap; }
+            #reader { height: 220px !important; }
+        }
     </style>
 </head>
 <body>
@@ -41,13 +71,17 @@
         <nav class="sidebar-nav">
             <ul>
                 <li><a href="staff-dashboard.html">Dashboard Summary</a></li>
+                <li><a href="beneficiary-requests.html">Milk Requests</a></li>
                 <li><a href="lab-verifications.html">Lab Verifications</a></li>
                 <li><a href="safe-inventory.html" class="active">Safe Inventory</a></li>
-                <li><a href="safe-dispensing.html">Safe Dispensing</a></li>
                 <li><a href="donor-management.html">Donor Profiles</a></li>
                 <li><a href="milk-batch-processing.html">Milk Batch Processing</a></li>
             </ul>
         </nav>
+        <div class="sidebar-footer">
+            <p>Logged in as: <strong id="current-user">Staff</strong></p>
+            <a href="login.html" class="logout-btn">Secure Logout</a>
+        </div>
     </aside>
 
     <main class="dashboard-main">
@@ -71,14 +105,24 @@
             </div>
         </section>
 
+        <section class="card" style="border-top-color: #38BDF8;">
+            <h2 style="margin-bottom: 1rem;">Barcode Scanner</h2>
+            <p id="scanner-status" style="margin-bottom: 1rem; color: #2563EB;">Point the camera at a batch barcode to scan.</p>
+            <div id="reader" style="width: 100%; height: 320px; min-height: 220px; max-height: 480px; border-radius: 6px; overflow: hidden;"></div>
+            <div style="margin-top: 1rem;">
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Last scanned batch</label>
+                <input type="text" id="scanner_output" readonly style="width: 100%; padding: 0.75rem; border: 1px solid #CBD5E1; border-radius: 6px; background: #e2e8f0; font-weight: 600;">
+            </div>
+        </section>
+
         <section>
             <table class="data-table">
                 <thead>
                     <tr>
-                        <th>Batch ID</th>
-                        <th>Volume (mL)</th>
-                        <th>Location</th>
-                        <th>Expiration Date</th>
+                        <th>Batch / Barcode</th>
+                        <th>Full Name</th>
+                        <th>Donor DTN</th>
+                        <th>Volume</th>
                         <th>Status</th>
                         <th>Action</th>
                     </tr>
@@ -104,5 +148,169 @@
             </table>
         </section>
     </main>
+<<<<<<< HEAD
+=======
+<script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+    import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+    import { getFirestore, collection, getDocs, updateDoc, doc, addDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+    import '../assets/js/batch-utils.js';
+
+    const firebaseConfig = {
+        apiKey: 'AIzaSyCgtXZAe_-Wj0D4Pd-t2BYAU3E2faUF86M',
+        authDomain: 'hmbms-f70b5.firebaseapp.com',
+        projectId: 'hmbms-f70b5',
+        storageBucket: 'hmbms-f70b5.firebasestorage.app',
+        messagingSenderId: '276256441806',
+        appId: '1:276256441806:web:2e3db876c0dddbfb37979f',
+        measurementId: 'G-XD87JGC0MZ'
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // Update sidebar with current user and wire logout
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            const nameEl = document.getElementById('current-user') || document.querySelector('.sidebar-footer strong');
+            if (nameEl) {
+                const display = user.displayName || user.email || user.uid || 'Staff';
+                nameEl.textContent = String(display).split('@')[0];
+            }
+        } else {
+            window.location.href = 'login.html';
+        }
+    });
+
+    const logoutBtn = document.querySelector('.logout-btn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            signOut(auth).then(() => {
+                window.location.href = 'login.html';
+            }).catch((err) => {
+                console.error('Sign out failed:', err);
+                window.location.href = 'login.html';
+            });
+        });
+    }
+
+    async function loadInventory() {
+        await auth.authStateReady();
+        if (!auth.currentUser) {
+            window.location.href = 'login.html';
+            return;
+        }
+        const snap = await getDocs(collection(db, 'Milk_Batches'));
+        const batches = snap.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
+        const availableBatches = batches.filter(batch => window.LacteeBatchUtils.isReadyToDispenseBatch(batch));
+
+        const totalVolume = availableBatches.reduce((sum, batch) => sum + (Number(batch.volume_ml) || Number(batch.volume) || 0), 0);
+        const expiringSoon = availableBatches.filter(batch => {
+            const expiry = batch.expiration_date || batch.expiry_date || '';
+            if (!expiry) return false;
+            const date = new Date(expiry);
+            if (Number.isNaN(date.getTime())) return false;
+            const diffDays = (date - new Date()) / 86400000;
+            return diffDays > 0 && diffDays <= 30;
+        }).length;
+
+        document.getElementById('safe-volume').textContent = `${totalVolume} mL`;
+        document.getElementById('safe-batches').textContent = availableBatches.length;
+        document.getElementById('safe-expiring').textContent = expiringSoon;
+
+        const tbody = document.getElementById('inventory-body');
+        if (!availableBatches.length) {
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">No safe inventory found yet.</td></tr>';
+            return;
+        }
+        tbody.innerHTML = availableBatches.map(batch => {
+            const batchId = window.LacteeBatchUtils.getBatchIdentifier(batch);
+            const volume = window.LacteeBatchUtils.getBatchVolume(batch);
+            const status = window.LacteeBatchUtils.getBatchDisplayStatus(batch);
+            return `
+                <tr id="inv-${batch.id}">
+                    <td><strong>${batchId}</strong></td>
+                    <td>${batch.full_name || batch.donor_name || 'N/A'}</td>
+                    <td>${batch.donor_dtn || 'N/A'}</td>
+                    <td>${volume} mL</td>
+                    <td><span class="status-badge" id="status-${batch.id}">${status}</span></td>
+                    <td><button class="btn-primary" onclick="dispenseBatch('${batch.id}')">Dispense</button></td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    // Single-verification dispense flow
+    window.dispenseBatch = async function(batchDocId) {
+        try {
+            const v = prompt('Verifier: enter your staff identifier (name or email)');
+            if (!v) return alert('Dispense cancelled: verifier required.');
+
+            const confirmDispense = confirm(`Confirm dispense by ${v.trim()} for batch ${batchDocId}?`);
+            if (!confirmDispense) return;
+
+            await auth.authStateReady();
+            if (!auth.currentUser) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            // Update the batch status
+            await updateDoc(doc(db, 'Milk_Batches', batchDocId), {
+                status: 'Dispensed',
+                state: 'Dispensed',
+                dispensed_at: serverTimestamp(),
+                dispensed_by: v.trim()
+            });
+
+            // Log the dispense event for audit
+            await addDoc(collection(db, 'Milk_Dispense_Logs'), {
+                batch_id: batchDocId,
+                verifier: v.trim(),
+                acted_by: auth.currentUser.uid || auth.currentUser.email || null,
+                timestamp: serverTimestamp()
+            });
+
+            // Also add to state logs
+            await addDoc(collection(db, 'Milk_State_Logs'), {
+                batch_id: batchDocId,
+                previous_state: 'Ready',
+                new_state: 'Dispensed',
+                staff_id: auth.currentUser.email || auth.currentUser.uid || 'unknown',
+                timestamp: serverTimestamp()
+            });
+
+            // Update the UI
+            const statusEl = document.getElementById(`status-${batchDocId}`);
+            if (statusEl) statusEl.textContent = 'Dispensed';
+            const row = document.getElementById(`inv-${batchDocId}`);
+            if (row) {
+                const btn = row.querySelector('button');
+                if (btn) btn.disabled = true;
+            }
+
+            alert('Batch marked as Dispensed.');
+        } catch (err) {
+            console.error('Dispense failed:', err);
+            alert('Dispense failed. Check console for details and verify permissions.');
+        }
+    }
+
+    const scannerStatus = document.getElementById('scanner-status');
+    const scannerOutput = document.getElementById('scanner_output');
+
+    function onScanSuccess(decodedText) {
+        scannerOutput.value = decodedText;
+        scannerStatus.textContent = `Barcode captured: ${decodedText}`;
+    }
+
+    const scanner = new Html5QrcodeScanner('reader', { fps: 10, qrbox: { width: 240, height: 120 } }, false);
+    scanner.render(onScanSuccess);
+
+    loadInventory();
+</script>
+>>>>>>> 526b85a (Co-authored-by: silas1218 <silas1218@users.noreply.github.com>)
 </body>
 </html>

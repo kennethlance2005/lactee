@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HMBMS | Milk Requests</title>
+    
+    <style>
+        /* --- GENERAL RESETS & TYPOGRAPHY --- */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: #F8FAFC; color: #334155; line-height: 1.6; display: flex; min-height: 100vh; overflow-x: hidden; }
+
+        /* --- BUTTONS --- */
+        .btn-sm { padding: 0.4rem 0.8rem; border-radius: 4px; border: none; cursor: pointer; font-size: 0.85rem; font-weight: 600; text-decoration: none; display: inline-block; }
+        .btn-approve { background-color: #10B981; color: white; }
+        .btn-reject { background-color: #EF4444; color: white; }
+        .btn-outline { background-color: transparent; border: 1px solid #CBD5E1; color: #475569; }
+        .btn-outline:hover { background-color: #F1F5F9; }
+
+        /* --- SIDEBAR NAVIGATION --- */
+        .sidebar { width: 250px; background-color: #1E293B; color: white; display: flex; flex-direction: column; position: fixed; height: 100vh; z-index: 100; }
+        .sidebar-header { padding: 1.5rem; border-bottom: 1px solid #334155; }
+        .sidebar-header h2 { color: #38BDF8; margin-bottom: 0.2rem; }
+        .sidebar-header p { font-size: 0.85rem; color: #94A3B8; }
+        .sidebar-nav { flex-grow: 1; padding: 1.5rem 0; }
+        .sidebar-nav ul { list-style: none; }
+        .sidebar-nav a { display: block; padding: 0.8rem 1.5rem; color: #CBD5E1; text-decoration: none; transition: background 0.2s; }
+        .sidebar-nav a:hover, .sidebar-nav a.active { background-color: #334155; color: white; border-left: 4px solid #38BDF8; }
+        .sidebar-footer { padding: 1.5rem; border-top: 1px solid #334155; font-size: 0.85rem; }
+        .logout-btn { color: #F87171; text-decoration: none; display: inline-block; margin-top: 0.5rem; }
+
+        /* --- MAIN CONTENT AREA --- */
+        .dashboard-main { flex-grow: 1; margin-left: 250px; padding: 2.5rem 4%; }
+        .dashboard-header { margin-bottom: 2.5rem; display: flex; justify-content: space-between; align-items: flex-end; }
+        .dashboard-header h1 { color: #0F172A; }
+
+        /* --- DATA TABLE --- */
+        .table-container { background: white; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); overflow-x: auto; }
+        .data-table { width: 100%; border-collapse: collapse; text-align: left; }
+        .data-table th, .data-table td { padding: 1rem 1.5rem; border-bottom: 1px solid #E2E8F0; font-size: 0.95rem; }
+        .data-table th { background-color: #F1F5F9; font-weight: 600; color: #475569; white-space: nowrap; }
+        .data-table tbody tr:hover { background-color: #F8FAFC; }
+        
+        /* --- BADGES --- */
+        .badge { padding: 0.25rem 0.6rem; border-radius: 999px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+        .badge-pending { background: #FEF3C7; color: #D97706; }
+        .badge-approved { background: #D1FAE5; color: #059669; }
+        .badge-rejected { background: #FEE2E2; color: #DC2626; }
+
+        /* --- LOADING SPINNER --- */
+        #loader { text-align: center; padding: 3rem; color: #64748B; font-weight: 500; }
+
+        @media (max-width: 1024px) {
+            .sidebar { width: 200px; }
+            .dashboard-main { margin-left: 200px; }
+        }
+        @media (max-width: 768px) {
+            body { flex-direction: column; }
+            .sidebar { position: relative; width: 100%; height: auto; }
+            .dashboard-main { margin-left: 0; padding: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+    
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h2>HMBMS</h2>
+            <p>Staff Portal</p>
+        </div>
+        <nav class="sidebar-nav">
+            <ul>
+                <li><a href="staff-dashboard.html">Dashboard Summary</a></li>
+                <li><a href="beneficiary-requests.html" class="active">Milk Requests</a></li>
+                <li><a href="lab-verifications.html">Lab Verifications</a></li>
+                <li><a href="safe-inventory.html">Safe Inventory</a></li>
+                <li><a href="donor-management.html">Donor Profiles</a></li>
+                <li><a href="milk-batch-processing.html">Milk Batch Processing</a></li>
+            </ul>
+        </nav>
+        <div class="sidebar-footer">
+            <p>Logged in as: <strong>Nurse Clara</strong></p>
+            <a href="login.html" class="logout-btn">Secure Logout</a>
+        </div>
+    </aside>
+
+    <main class="dashboard-main">
+        <header class="dashboard-header">
+            <div>
+                <h1>Beneficiary Requests</h1>
+                <p>Review and triage incoming pasteurized human milk applications.</p>
+            </div>
+            <button class="btn-sm btn-outline" onclick="loadRequests()">🔄 Refresh Data</button>
+        </header>
+
+        <div class="table-container">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Date Submitted</th>
+                        <th>Parent Name</th>
+                        <th>Infant & Need</th>
+                        <th>Vol (mL)</th>
+                        <th>Documents</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="requests-tbody">
+                    </tbody>
+            </table>
+            <div id="loader">Fetching latest applications from secure database...</div>
+        </div>
+    </main>
+
+    <style>
+        @media (max-width: 1024px) {
+            .sidebar { width: 200px; }
+            .dashboard-main { margin-left: 200px; padding: 1.5rem; }
+        }
+        @media (max-width: 768px) {
+            body { flex-direction: column; }
+            .sidebar { position: relative; width: 100%; height: auto; }
+            .dashboard-main { margin-left: 0; padding: 1rem; }
+            .data-table { display: block; overflow-x: auto; white-space: nowrap; }
+        }
+    </style>
+
+    <script type="module">
+        import { db } from '../assets/js/firebase-config.js';
+        import { collection, query, orderBy, getDocs, doc, updateDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js';
+
+        const tableBody = document.getElementById('requests-tbody');
+        const loader = document.getElementById('loader');
+
+        // Function to fetch and display requests
+        window.loadRequests = async function() {
+            tableBody.innerHTML = ''; // Clear table
+            loader.style.display = 'block';
+
+            try {
+                // Query Firestore, ordering by newest first
+                const q = query(collection(db, 'Milk_Inquiries'), orderBy('created_at', 'desc'));
+                const querySnapshot = await getDocs(q);
+                
+                loader.style.display = 'none';
+
+                if (querySnapshot.empty) {
+                    tableBody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 2rem;">No milk requests found.</td></tr>';
+                    return;
+                }
+
+                querySnapshot.forEach((document) => {
+                    const data = document.data();
+                    const docId = document.id;
+
+                    // Format the timestamp securely
+                    let dateString = "N/A";
+                    if (data.created_at) {
+                        const dateObj = data.created_at.toDate();
+                        dateString = dateObj.toLocaleDateString() + ' ' + dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                    }
+
+                    let badgeClass = 'badge-pending';
+                    if (data.status === 'Approved') badgeClass = 'badge-approved';
+                    if (data.status === 'Rejected') badgeClass = 'badge-rejected';
+
+                    const formDetails = data.form_details || {};
+                    const parentName = formDetails.mother_name || data.mother_name || 'N/A';
+                    const contactNumber = formDetails.contact_number || data.contact_number || 'N/A';
+                    const infantName = formDetails.infant_name || data.infant_name || 'N/A';
+                    const diagnosis = formDetails.medical_diagnosis || data.medical_diagnosis || 'No diagnosis provided';
+                    const requestedVolume = formDetails.requested_volume || data.requested_volume || 'N/A';
+                    const nicuBadge = (formDetails.is_nicu || data.is_nicu) ? `<span style="color: #EF4444; font-weight: bold; font-size: 0.8rem;">(NICU)</span>` : '';
+
+                    const documents = Array.isArray(data.documents) ? data.documents : [];
+                    const prescriptionDoc = documents.find(item => item.kind === 'prescription') || null;
+                    const idDoc = documents.find(item => item.kind === 'parent_id') || null;
+
+                    const buildDocumentLink = (doc) => {
+                        const documentUrl = doc?.data_url || doc?.url || data.prescription_url || data.parent_id_url || null;
+                        if (!documentUrl) {
+                            return '<span style="color: #94A3B8;">No file</span>';
+                        }
+
+                        const isImage = doc?.mime_type?.startsWith('image/');
+                        if (isImage) {
+                            return `<a href="${documentUrl}" target="_blank" title="Open image"><img src="${documentUrl}" alt="Document preview" style="max-width: 80px; max-height: 60px; object-fit: cover; border-radius: 4px;" /></a>`;
+                        }
+
+                        return `<a href="${documentUrl}" target="_blank" style="color: #2563EB;">View</a>`;
+                    };
+
+                    const rxLink = buildDocumentLink(prescriptionDoc);
+                    const idLink = buildDocumentLink(idDoc);
+
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${dateString}</td>
+                        <td>
+                            <strong>${parentName}</strong><br>
+                            <span style="font-size: 0.8rem; color: #64748B;">${contactNumber}</span>
+                        </td>
+                        <td>
+                            ${infantName} ${nicuBadge}<br>
+                            <span style="font-size: 0.8rem; color: #64748B;">${diagnosis}</span>
+                        </td>
+                        <td><strong>${requestedVolume}</strong></td>
+                        <td>${rxLink} | ${idLink}</td>
+                        <td><span class="badge ${badgeClass}" id="status-${docId}">${data.status}</span></td>
+                        <td>
+                            <button class="btn-sm btn-approve" onclick="updateStatus('${docId}', 'Approved')" ${data.status !== 'Pending' ? 'disabled style="opacity: 0.5;"' : ''}>Approve</button>
+                            <button class="btn-sm btn-reject" onclick="updateStatus('${docId}', 'Rejected')" ${data.status !== 'Pending' ? 'disabled style="opacity: 0.5;"' : ''}>Reject</button>
+                        </td>
+                    `;
+                    tableBody.appendChild(tr);
+                });
+
+            } catch (error) {
+                console.error("Error loading requests: ", error);
+                loader.innerHTML = '<span style="color: #DC2626;">Error loading data. Check console for details or verify Firestore rules.</span>';
+            }
+        };
+
+        // Function to update the status in Firestore
+        window.updateStatus = async function(docId, newStatus) {
+            const confirmAction = confirm(`Are you sure you want to mark this request as ${newStatus}?`);
+            if (!confirmAction) return;
+
+            try {
+                // Update the document in Firestore
+                const docRef = doc(db, 'Milk_Inquiries', docId);
+                await updateDoc(docRef, {
+                    status: newStatus,
+                    updated_at: serverTimestamp()
+                });
+
+                // Instead of reloading the whole page, just update the UI visually for speed
+                const statusBadge = document.getElementById(`status-${docId}`);
+                statusBadge.textContent = newStatus;
+                statusBadge.className = `badge ${newStatus === 'Approved' ? 'badge-approved' : 'badge-rejected'}`;
+                
+                // Disable the buttons in this row
+                const buttons = statusBadge.closest('tr').querySelectorAll('button');
+                buttons.forEach(btn => {
+                    btn.disabled = true;
+                    btn.style.opacity = '0.5';
+                });
+
+            } catch (error) {
+                console.error("Error updating status: ", error);
+                alert("Failed to update status. Do you have the correct Firestore write permissions?");
+            }
+        };
+
+        // Load data automatically when the page opens
+        document.addEventListener('DOMContentLoaded', loadRequests);
+
+    </script>
+</body>
+</html>

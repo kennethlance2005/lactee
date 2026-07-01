@@ -234,7 +234,15 @@
         </div>
     </section>
 
+<<<<<<< HEAD
     <script>
+=======
+    <script type="module">
+        import { auth, db } from './assets/js/firebase-config.js';
+        import { signInAnonymously } from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js';
+        import { collection, addDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js';
+
+>>>>>>> 526b85a (Co-authored-by: silas1218 <silas1218@users.noreply.github.com>)
         const donorForm = document.getElementById('donor-form');
         const programRadios = document.querySelectorAll('input[name="program_category"]');
         const programCards = document.querySelectorAll('.program-card');
@@ -305,10 +313,27 @@
             
             const formData = new FormData(donorForm);
             const activeCategory = formData.get('program_category');
+<<<<<<< HEAD
             
             // Filter payload to only include data from the active program flow
             const payload = { program_category: activeCategory };
             
+=======
+            const msgEl = document.getElementById('donor-form-message');
+
+            const payload = {
+                record_type: 'donor_profile',
+                program_category: activeCategory,
+                screening_status: 'Pending',
+                created_at: serverTimestamp(),
+                updated_at: serverTimestamp(),
+                source: 'public-donation',
+                first_name: '',
+                last_name: '',
+                contact_number: ''
+            };
+
+>>>>>>> 526b85a (Co-authored-by: silas1218 <silas1218@users.noreply.github.com>)
             for (let [key, value] of formData.entries()) {
                 if (activeCategory === 'supsup_todo' && key.startsWith('st_')) payload[key] = value;
                 if (activeCategory === 'milky_way' && key.startsWith('mw_')) payload[key] = value;

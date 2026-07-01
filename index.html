@@ -40,6 +40,7 @@
         </div>
     </section>
 
+<<<<<<< HEAD
     <section id="faq" class="faq py-5 bg-light">
         <div class="container py-4">
             <div class="row justify-content-center">
@@ -192,3 +193,106 @@
     <script type="module" src="assets/js/firebase-config.js"></script>
 </body>
 </html>
+=======
+    <section id="faq" class="faq py-5 bg-light">
+        <div class="container py-4">
+            <div class="row justify-content-center">
+                <div class="col-lg-8 text-center mb-5">
+                    <h2>Frequently Asked Questions</h2>
+                    <p class="text-muted">Answers to common questions about donating and requesting milk.</p>
+                </div>
+            </div>
+            <div class="row justify-content-center">
+                <div class="col-lg-12">
+                    <div class="faq-flip-list">
+
+                        <div class="faq-flip-card" role="button" tabindex="0" aria-expanded="false">
+                            <div class="faq-card-inner">
+                                <div class="faq-card-face faq-card-front">
+                                    <h3>Is donor human milk safe for my baby?</h3>
+                                </div>
+                                <div class="faq-card-face faq-card-back">
+                                    <p>Yes. All donated milk goes through health screening, Holder pasteurization, and laboratory testing before it is approved for distribution. Every batch is tracked from donor to recipient.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="faq-flip-card" role="button" tabindex="0" aria-expanded="false">
+                            <div class="faq-card-inner">
+                                <div class="faq-card-face faq-card-front">
+                                    <h3>Who can donate milk?</h3>
+                                </div>
+                                <div class="faq-card-face faq-card-back">
+                                    <p>Healthy, breastfeeding mothers who pass a medical and lifestyle screening may qualify as donors. Visit our <a href="donate-milk.html">Donate Milk</a> page for the full eligibility criteria.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="faq-flip-card" role="button" tabindex="0" aria-expanded="false">
+                            <div class="faq-card-inner">
+                                <div class="faq-card-face faq-card-front">
+                                    <h3>Who is eligible to receive milk?</h3>
+                                </div>
+                                <div class="faq-card-face faq-card-back">
+                                    <p>Priority is given to premature infants, NICU patients, and babies whose mothers are medically unable to produce enough milk. Requests are reviewed and approved by our staff.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="faq-flip-card" role="button" tabindex="0" aria-expanded="false">
+                            <div class="faq-card-inner">
+                                <div class="faq-card-face faq-card-front">
+                                    <h3>Is there a cost to receive milk?</h3>
+                                </div>
+                                <div class="faq-card-face faq-card-back">
+                                    <p>Our milk bank operates on a non-profit basis. Any associated processing fees, if applicable, will be discussed during the request approval process.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="faq-flip-card" role="button" tabindex="0" aria-expanded="false">
+                            <div class="faq-card-inner">
+                                <div class="faq-card-face faq-card-front">
+                                    <h3>How long does the donation or request process take?</h3>
+                                </div>
+                                <div class="faq-card-face faq-card-back">
+                                    <p>typically takes 1 or 2 weeks. Once approved, our staff will coordinate pickup (for donors) or pasteurized milk release (for recipients) as quickly as possible.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="instructions" class="instructions py-5">
+    </section>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.querySelectorAll('.faq-flip-card').forEach((card) => {
+            const toggleCard = () => {
+                const isFlipped = card.classList.toggle('is-flipped');
+                card.setAttribute('aria-expanded', isFlipped);
+            };
+
+            card.addEventListener('click', (event) => {
+                if (event.target.closest('a')) {
+                    return;
+                }
+                toggleCard();
+            });
+            card.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    toggleCard();
+                }
+            });
+        });
+    </script>
+    <script type="module" src="assets/js/firebase-config.js"></script>
+</body>
+</html>
+>>>>>>> 526b85a (Co-authored-by: silas1218 <silas1218@users.noreply.github.com>)

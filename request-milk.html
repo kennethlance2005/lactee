@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="../styles.css">
 </head>
 <body>
+<<<<<<< HEAD
     <header class="navbar">
         <div class="logo">HMBMS</div>
         <nav>
@@ -63,6 +64,72 @@
                             </select>
                         </div>
                     </div>
+=======
+    <header class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+        <div class="container">
+            <a class="navbar-brand logo fw-bold text-primary" href="index.html">HMBMS</a>
+            <nav class="ms-auto">
+                <ul class="navbar-nav flex-row gap-3">
+                    <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="donate-milk.html">Donate Milk</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <section class="form-section py-5">
+        <div class="container">
+            <div class="card shadow-sm border-0 mx-auto" style="max-width: 800px;">
+                <div class="card-body p-4 p-md-5">
+                    <h2 class="mb-3">Request Human Milk</h2>
+                    <p class="form-subtitle text-muted mb-4">Please provide your details and required medical documents below. <strong>We will send all status updates and availability alerts directly to your phone via SMS.</strong></p>
+                    
+                    <form id="request-form" class="standard-form" enctype="multipart/form-data">
+                        
+                        <!-- SECTION 1: BENEFICIARY DETAILS -->
+                        <fieldset>
+                            <legend class="h5 border-bottom pb-2 mb-3">Beneficiary Details</legend>
+                            
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="mother_name" class="form-label">Parent/Guardian's Full Name *</label>
+                                    <input type="text" id="mother_name" name="mother_name" class="form-control" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="contact_number" class="form-label">Contact Number (For SMS) *</label>
+                                    <input type="tel" id="contact_number" name="contact_number" class="form-control" placeholder="e.g., 09123456789" required>
+                                </div>
+                            </div>
+
+                            <div class="row g-3 mt-1">
+                                <div class="col-md-6">
+                                    <label for="infant_name" class="form-label">Infant's Full Name *</label>
+                                    <input type="text" id="infant_name" name="infant_name" class="form-control" required>
+                                </div>
+                                <div class="col-md-6 d-flex align-items-center">
+                                    <div class="form-check mt-md-4">
+                                        <input type="checkbox" id="is_nicu" name="is_nicu" class="form-check-input">
+                                        <label class="form-check-label" for="is_nicu">Infant currently admitted to NICU?</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </fieldset>
+
+                        <!-- SECTION 2: MEDICAL DETAILS (Milk Type Removed) -->
+                        <fieldset class="mt-4">
+                            <legend class="h5 border-bottom pb-2 mb-3">Medical Details</legend>
+                            
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="requested_volume" class="form-label">Requested Volume (mL per day) *</label>
+                                    <input type="number" id="requested_volume" name="requested_volume" class="form-control" placeholder="e.g., 150" min="1" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="medical_diagnosis" class="form-label">Medical Diagnosis *</label>
+                                    <input type="text" id="medical_diagnosis" name="medical_diagnosis" class="form-control" placeholder="e.g., Prematurity, Sepsis" required>
+                                </div>
+                            </div>
+>>>>>>> 526b85a (Co-authored-by: silas1218 <silas1218@users.noreply.github.com>)
 
                     <div class="form-group full-width">
                         <label for="medical_notes">Additional Medical Notes (Optional)</label>
@@ -70,6 +137,7 @@
                     </div>
                 </fieldset>
 
+<<<<<<< HEAD
                 <button type="submit" class="btn-primary btn-full">Submit Request</button>
                 <p id="form-message" class="form-subtitle" style="margin-top: 1rem;"></p>
             </form>
@@ -77,16 +145,91 @@
     </section>
 
     <script>
+=======
+                        <!-- SECTION 3: REQUIRED DOCUMENTS -->
+                        <fieldset class="mt-4">
+                            <legend class="h5 border-bottom pb-2 mb-3">Required Documents</legend>
+                            
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="doctor_prescription" class="form-label">Doctor's Request / Prescription *</label>
+                                    <input type="file" id="doctor_prescription" name="doctor_prescription" class="form-control" accept=".pdf, image/jpeg, image/png" required>
+                                    <div class="form-text">Upload a clear photo or PDF.</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="parent_id" class="form-label">Parent/Guardian Valid ID *</label>
+                                    <input type="file" id="parent_id" name="parent_id" class="form-control" accept=".pdf, image/jpeg, image/png" required>
+                                    <div class="form-text">Government-issued ID for verification.</div>
+                                </div>
+                            </div>
+
+                            <div class="bg-light p-3 rounded mt-4 border">
+                                <div class="form-check">
+                                    <input type="checkbox" id="informed_consent" name="informed_consent" class="form-check-input" required>
+                                    <label class="form-check-label text-muted" style="font-size: 0.9rem;" for="informed_consent">
+                                        <strong class="text-dark">Informed Consent:</strong> I verify that the information provided is accurate. I understand that Pasteurized Donor Human Milk (PDHM) is dispensed strictly based on medical triage and availability, and that this request is subject to approval by the milk bank medical staff.
+                                    </label>
+                                </div>
+                            </div>
+                        </fieldset>
+
+                        <button type="submit" class="btn btn-primary w-100 mt-4 py-2 fw-bold">Submit Request & Documents</button>
+                        <p id="form-message" class="text-center mt-3 fw-bold"></p>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FIREBASE MODULE -->
+    <script type="module">
+        import { auth, db } from './assets/js/firebase-config.js';
+        import { signInAnonymously } from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js';
+        import { collection, addDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js';
+
+>>>>>>> 526b85a (Co-authored-by: silas1218 <silas1218@users.noreply.github.com>)
         const form = document.getElementById('request-form');
         const messageBox = document.getElementById('form-message');
 
+        async function encodeFile(file) {
+            if (!file || file.size === 0) return null;
+            return await new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = () => reject(new Error('Unable to read the selected file.'));
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function buildFormDetails(formData, formElement) {
+            const formDetails = {};
+
+            for (const [key, value] of formData.entries()) {
+                if (value instanceof File) continue;
+                const field = formElement.elements.namedItem(key);
+                if (field?.type === 'checkbox') {
+                    formDetails[key] = formData.getAll(key).length > 0;
+                } else {
+                    formDetails[key] = value;
+                }
+            }
+
+            return formDetails;
+        }
+
         form.addEventListener('submit', async function (event) {
             event.preventDefault();
+<<<<<<< HEAD
             const formData = new FormData(form);
             const payload = Object.fromEntries(formData.entries());
 
             messageBox.textContent = 'Submitting request...';
             messageBox.style.color = '#4a5568';
+=======
+
+            messageBox.textContent = 'Uploading documents and submitting request...';
+            messageBox.className = 'text-center mt-3 fw-bold text-secondary';
+>>>>>>> 526b85a (Co-authored-by: silas1218 <silas1218@users.noreply.github.com>)
 
             try {
                 const response = await fetch('/submit-inquiry', {
@@ -105,9 +248,58 @@
                     messageBox.textContent = result.message || 'Submission failed.';
                     messageBox.style.color = '#c53030';
                 }
+<<<<<<< HEAD
             } catch (error) {
                 messageBox.textContent = 'Submission failed. Please try again later.';
                 messageBox.style.color = '#c53030';
+=======
+
+                const formData = new FormData(form);
+                const prescriptionFile = formData.get('doctor_prescription');
+                const idFile = formData.get('parent_id');
+                const prescriptionData = await encodeFile(prescriptionFile);
+                const idData = await encodeFile(idFile);
+                const formDetails = buildFormDetails(formData, form);
+
+                const payload = {
+                    record_type: 'milk_request',
+                    application_type: 'beneficiary_request',
+                    status: 'Pending',
+                    source: 'public-request',
+                    created_at: serverTimestamp(),
+                    updated_at: serverTimestamp(),
+                    submitted_by: auth.currentUser?.uid || null,
+                    mother_name: formDetails.mother_name || '',
+                    contact_number: formDetails.contact_number || '',
+                    infant_name: formDetails.infant_name || '',
+                    is_nicu: Boolean(formDetails.is_nicu),
+                    requested_volume: Number(formDetails.requested_volume) || 0,
+                    medical_diagnosis: formDetails.medical_diagnosis || '',
+                    medical_notes: formDetails.medical_notes || '',
+                    prescription_url: prescriptionData,
+                    parent_id_url: idData,
+                    documents: [
+                        ...(prescriptionData ? [{ kind: 'prescription', name: prescriptionFile?.name || 'prescription', mime_type: prescriptionFile?.type || '', size: prescriptionFile?.size || 0, data_url: prescriptionData }] : []),
+                        ...(idData ? [{ kind: 'parent_id', name: idFile?.name || 'parent-id', mime_type: idFile?.type || '', size: idFile?.size || 0, data_url: idData }] : [])
+                    ],
+                    form_details: formDetails,
+                    request_summary: `${formDetails.infant_name || 'Infant'} • ${formDetails.medical_diagnosis || 'No diagnosis'}`
+                };
+
+                await addDoc(collection(db, 'Milk_Inquiries'), payload);
+
+                messageBox.textContent = 'Request received and added to the HMBMS staff portal.';
+                messageBox.className = 'text-center mt-3 fw-bold text-success';
+                form.reset();
+            } catch (error) {
+                console.error('Request submission failed:', error);
+                const message = error?.code === 'permission-denied'
+                    ? 'Firebase permissions are blocking the submission. Check your Firestore/Storage security rules.'
+                    : error?.message || 'Submission failed. Please try again later.';
+
+                messageBox.textContent = message;
+                messageBox.className = 'text-center mt-3 fw-bold text-danger';
+>>>>>>> 526b85a (Co-authored-by: silas1218 <silas1218@users.noreply.github.com>)
             }
         });
     </script>
