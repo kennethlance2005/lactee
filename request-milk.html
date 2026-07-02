@@ -71,7 +71,7 @@
                     <h2 class="mb-3">Request Human Milk</h2>
                     <p class="form-subtitle text-muted mb-4">Please provide your details and required medical documents below. <strong>We will send all status updates and availability alerts directly to your phone via SMS.</strong></p>
                     
-                    <form id="request-form" class="standard-form" enctype="multipart/form-data">
+                    <form id="request-form" class="standard-form">
                         
                         <!-- SECTION 1: BENEFICIARY DETAILS -->
                         <fieldset>
@@ -79,19 +79,32 @@
                             
                             <div class="row g-3">
                                 <div class="col-md-6">
-                                    <label for="mother_name" class="form-label">Parent/Guardian's Full Name *</label>
+                                    <label for="mother_name" class="form-label">Parent/Guardian's First Name *</label>
                                     <input type="text" id="mother_name" name="mother_name" class="form-control" required>
                                 </div>
                                 <div class="col-md-6">
-                                    <label for="contact_number" class="form-label">Contact Number (For SMS) *</label>
-                                    <input type="tel" id="contact_number" name="contact_number" class="form-control" placeholder="e.g., 09123456789" required>
+                                    <label for="mother_last_name" class="form-label">Parent/Guardian's Last Name *</label>
+                                    <input type="text" id="mother_name" name="mother_name" class="form-control" required>
                                 </div>
                             </div>
 
                             <div class="row g-3 mt-1">
                                 <div class="col-md-6">
-                                    <label for="infant_name" class="form-label">Infant's Full Name *</label>
+                                    <label for="infant_name" class="form-label">Infant's First Name *</label>
                                     <input type="text" id="infant_name" name="infant_name" class="form-control" required>
+                                </div>
+                                <div class="col-md-6 d-flex align-items-center">
+                                    <div class="col-md-6">
+                                        <label for="infant_name" class="form-label">Infant's Last Name *</label>
+                                        <input type="text" id="infant_name" name="infant_name" class="form-control" required>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="contact_number" class="form-label">Contact Number (For SMS) *</label>
+                                    <input type="tel" id="contact_number" name="contact_number" class="form-control" placeholder="e.g., 09123456789" required>
                                 </div>
                                 <div class="col-md-6 d-flex align-items-center">
                                     <div class="form-check mt-md-4">
@@ -116,39 +129,9 @@
                                     <input type="text" id="medical_diagnosis" name="medical_diagnosis" class="form-control" placeholder="e.g., Prematurity, Sepsis" required>
                                 </div>
                             </div>
-
-                            <div class="mt-3">
-                                <label for="medical_notes" class="form-label">Additional Medical Notes (Optional)</label>
-                                <textarea id="medical_notes" name="medical_notes" rows="3" class="form-control" placeholder="Any specific dietary requirements or medical context..."></textarea>
-                            </div>
                         </fieldset>
 
-                        <!-- SECTION 3: REQUIRED DOCUMENTS -->
-                        <fieldset class="mt-4">
-                            <legend class="h5 border-bottom pb-2 mb-3">Required Documents</legend>
-                            
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    <label for="doctor_prescription" class="form-label">Doctor's Request / Prescription *</label>
-                                    <input type="file" id="doctor_prescription" name="doctor_prescription" class="form-control" accept=".pdf, image/jpeg, image/png" required>
-                                    <div class="form-text">Upload a clear photo or PDF.</div>
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="parent_id" class="form-label">Parent/Guardian Valid ID *</label>
-                                    <input type="file" id="parent_id" name="parent_id" class="form-control" accept=".pdf, image/jpeg, image/png" required>
-                                    <div class="form-text">Government-issued ID for verification.</div>
-                                </div>
-                            </div>
-
-                            <div class="bg-light p-3 rounded mt-4 border">
-                                <div class="form-check">
-                                    <input type="checkbox" id="informed_consent" name="informed_consent" class="form-check-input" required>
-                                    <label class="form-check-label text-muted" style="font-size: 0.9rem;" for="informed_consent">
-                                        <strong class="text-dark">Informed Consent:</strong> I verify that the information provided is accurate. I understand that Pasteurized Donor Human Milk (PDHM) is dispensed strictly based on medical triage and availability, and that this request is subject to approval by the milk bank medical staff.
-                                    </label>
-                                </div>
-                            </div>
-                        </fieldset>
+                        <!-- Required documents removed -->
 
                         <button type="submit" class="btn btn-primary w-100 mt-4 py-2 fw-bold">Submit Request & Documents</button>
                         <p id="form-message" class="text-center mt-3 fw-bold"></p>
@@ -163,19 +146,8 @@
         import { auth, db } from './assets/js/firebase-config.js';
         import { signInAnonymously } from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js';
         import { collection, addDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js';
-
         const form = document.getElementById('request-form');
         const messageBox = document.getElementById('form-message');
-
-        async function encodeFile(file) {
-            if (!file || file.size === 0) return null;
-            return await new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = () => resolve(reader.result);
-                reader.onerror = () => reject(new Error('Unable to read the selected file.'));
-                reader.readAsDataURL(file);
-            });
-        }
 
         function buildFormDetails(formData, formElement) {
             const formDetails = {};
@@ -196,8 +168,11 @@
         form.addEventListener('submit', async function (event) {
             event.preventDefault();
 
-            messageBox.textContent = 'Uploading documents and submitting request...';
+            messageBox.textContent = 'Submitting request...';
             messageBox.className = 'text-center mt-3 fw-bold text-secondary';
+
+            const submitBtn = form.querySelector('button[type="submit"]');
+            if (submitBtn) submitBtn.disabled = true;
 
             try {
                 if (!auth.currentUser) {
@@ -205,10 +180,6 @@
                 }
 
                 const formData = new FormData(form);
-                const prescriptionFile = formData.get('doctor_prescription');
-                const idFile = formData.get('parent_id');
-                const prescriptionData = await encodeFile(prescriptionFile);
-                const idData = await encodeFile(idFile);
                 const formDetails = buildFormDetails(formData, form);
 
                 const payload = {
@@ -226,12 +197,6 @@
                     requested_volume: Number(formDetails.requested_volume) || 0,
                     medical_diagnosis: formDetails.medical_diagnosis || '',
                     medical_notes: formDetails.medical_notes || '',
-                    prescription_url: prescriptionData,
-                    parent_id_url: idData,
-                    documents: [
-                        ...(prescriptionData ? [{ kind: 'prescription', name: prescriptionFile?.name || 'prescription', mime_type: prescriptionFile?.type || '', size: prescriptionFile?.size || 0, data_url: prescriptionData }] : []),
-                        ...(idData ? [{ kind: 'parent_id', name: idFile?.name || 'parent-id', mime_type: idFile?.type || '', size: idFile?.size || 0, data_url: idData }] : [])
-                    ],
                     form_details: formDetails,
                     request_summary: `${formDetails.infant_name || 'Infant'} • ${formDetails.medical_diagnosis || 'No diagnosis'}`
                 };
@@ -249,6 +214,8 @@
 
                 messageBox.textContent = message;
                 messageBox.className = 'text-center mt-3 fw-bold text-danger';
+            } finally {
+                if (submitBtn) submitBtn.disabled = false;
             }
         });
     </script>

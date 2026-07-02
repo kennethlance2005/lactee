@@ -72,10 +72,10 @@
             <ul>
                 <li><a href="staff-dashboard.html">Dashboard Summary</a></li>
                 <li><a href="beneficiary-requests.html" class="active">Milk Requests</a></li>
-                <li><a href="laboratory.html">Laboratory</a></li>
-                <li><a href="safe-inventory.html">Safe Inventory</a></li>
                 <li><a href="donor-management.html">Donor Profiles</a></li>
                 <li><a href="milk-batch-processing.html">Milk Batch Processing</a></li>
+                <li><a href="laboratory.html">Laboratory</a></li>
+                <li><a href="safe-inventory.html">Inventory</a></li>
             </ul>
         </nav>
         <div class="sidebar-footer">
@@ -87,10 +87,9 @@
     <main class="dashboard-main">
         <header class="dashboard-header">
             <div>
-                <h1>Beneficiary Requests</h1>
+                <h1>Milk Requests</h1>
                 <p>Review and triage incoming pasteurized human milk applications.</p>
             </div>
-            <button class="btn-sm btn-outline" onclick="loadRequests()">🔄 Refresh Data</button>
         </header>
 
         <div class="table-container">
@@ -99,11 +98,9 @@
                     <tr>
                         <th>Date Submitted</th>
                         <th>Parent Name</th>
-                        <th>Infant & Need</th>
+                        <th>Infant Name</th>
                         <th>Vol (mL)</th>
-                        <th>Documents</th>
                         <th>Status</th>
-                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody id="requests-tbody">
@@ -127,98 +124,112 @@
     </style>
 
     <script type="module">
-        import { db } from '../assets/js/firebase-config.js';
-        import { collection, query, orderBy, getDocs, doc, updateDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js';
+        import { db, auth } from '../assets/js/firebase-config.js';
+        import { signInAnonymously } from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js';
+        import { collection, query, orderBy, onSnapshot, doc, updateDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js';
 
         const tableBody = document.getElementById('requests-tbody');
         const loader = document.getElementById('loader');
+        let unsubscribe = null;
 
-        // Function to fetch and display requests
-        window.loadRequests = async function() {
+        // Function to fetch and display requests (real-time)
+        window.loadRequests = function() {
+            // If there's an existing listener, detach it first
+            if (typeof unsubscribe === 'function') {
+                unsubscribe();
+                unsubscribe = null;
+            }
+
             tableBody.innerHTML = ''; // Clear table
             loader.style.display = 'block';
 
             try {
                 // Query Firestore, ordering by newest first
                 const q = query(collection(db, 'Milk_Inquiries'), orderBy('created_at', 'desc'));
-                const querySnapshot = await getDocs(q);
-                
-                loader.style.display = 'none';
 
-                if (querySnapshot.empty) {
-                    tableBody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 2rem;">No milk requests found.</td></tr>';
-                    return;
-                }
+                unsubscribe = onSnapshot(q, (querySnapshot) => {
+                    loader.style.display = 'none';
+                    tableBody.innerHTML = '';
 
-                querySnapshot.forEach((document) => {
-                    const data = document.data();
-                    const docId = document.id;
-
-                    // Format the timestamp securely
-                    let dateString = "N/A";
-                    if (data.created_at) {
-                        const dateObj = data.created_at.toDate();
-                        dateString = dateObj.toLocaleDateString() + ' ' + dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                    if (querySnapshot.empty) {
+                        tableBody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 2rem;">No milk requests found.</td></tr>';
+                        return;
                     }
 
-                    let badgeClass = 'badge-pending';
-                    if (data.status === 'Approved') badgeClass = 'badge-approved';
-                    if (data.status === 'Rejected') badgeClass = 'badge-rejected';
+                    querySnapshot.forEach((document) => {
+                        const data = document.data();
+                        const docId = document.id;
 
-                    const formDetails = data.form_details || {};
-                    const parentName = formDetails.mother_name || data.mother_name || 'N/A';
-                    const contactNumber = formDetails.contact_number || data.contact_number || 'N/A';
-                    const infantName = formDetails.infant_name || data.infant_name || 'N/A';
-                    const diagnosis = formDetails.medical_diagnosis || data.medical_diagnosis || 'No diagnosis provided';
-                    const requestedVolume = formDetails.requested_volume || data.requested_volume || 'N/A';
-                    const nicuBadge = (formDetails.is_nicu || data.is_nicu) ? `<span style="color: #EF4444; font-weight: bold; font-size: 0.8rem;">(NICU)</span>` : '';
-
-                    const documents = Array.isArray(data.documents) ? data.documents : [];
-                    const prescriptionDoc = documents.find(item => item.kind === 'prescription') || null;
-                    const idDoc = documents.find(item => item.kind === 'parent_id') || null;
-
-                    const buildDocumentLink = (doc) => {
-                        const documentUrl = doc?.data_url || doc?.url || data.prescription_url || data.parent_id_url || null;
-                        if (!documentUrl) {
-                            return '<span style="color: #94A3B8;">No file</span>';
+                        // Format the timestamp securely
+                        let dateString = "N/A";
+                        if (data.created_at) {
+                            const dateObj = data.created_at.toDate();
+                            dateString = dateObj.toLocaleDateString() + ' ' + dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
                         }
 
-                        const isImage = doc?.mime_type?.startsWith('image/');
-                        if (isImage) {
-                            return `<a href="${documentUrl}" target="_blank" title="Open image"><img src="${documentUrl}" alt="Document preview" style="max-width: 80px; max-height: 60px; object-fit: cover; border-radius: 4px;" /></a>`;
-                        }
+                        let badgeClass = 'badge-pending';
+                        if (data.status === 'Approved') badgeClass = 'badge-approved';
+                        if (data.status === 'Rejected') badgeClass = 'badge-rejected';
 
-                        return `<a href="${documentUrl}" target="_blank" style="color: #2563EB;">View</a>`;
-                    };
+                        const formDetails = data.form_details || {};
+                        const parentName = formDetails.mother_name || data.mother_name || 'N/A';
+                        const contactNumber = formDetails.contact_number || data.contact_number || 'N/A';
+                        const infantName = formDetails.infant_name || data.infant_name || 'N/A';
+                        const diagnosis = formDetails.medical_diagnosis || data.medical_diagnosis || 'No diagnosis provided';
+                        const requestedVolume = formDetails.requested_volume || data.requested_volume || 'N/A';
+                        const nicuBadge = (formDetails.is_nicu || data.is_nicu) ? `<span style="color: #EF4444; font-weight: bold; font-size: 0.8rem;">(NICU)</span>` : '';
 
-                    const rxLink = buildDocumentLink(prescriptionDoc);
-                    const idLink = buildDocumentLink(idDoc);
+                        const documents = Array.isArray(data.documents) ? data.documents : [];
+                        const prescriptionDoc = documents.find(item => item.kind === 'prescription') || null;
+                        const idDoc = documents.find(item => item.kind === 'parent_id') || null;
 
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td>${dateString}</td>
-                        <td>
-                            <strong>${parentName}</strong><br>
-                            <span style="font-size: 0.8rem; color: #64748B;">${contactNumber}</span>
-                        </td>
-                        <td>
-                            ${infantName} ${nicuBadge}<br>
-                            <span style="font-size: 0.8rem; color: #64748B;">${diagnosis}</span>
-                        </td>
-                        <td><strong>${requestedVolume}</strong></td>
-                        <td>${rxLink} | ${idLink}</td>
-                        <td><span class="badge ${badgeClass}" id="status-${docId}">${data.status}</span></td>
-                        <td>
-                            <button class="btn-sm btn-approve" onclick="updateStatus('${docId}', 'Approved')" ${data.status !== 'Pending' ? 'disabled style="opacity: 0.5;"' : ''}>Approve</button>
-                            <button class="btn-sm btn-reject" onclick="updateStatus('${docId}', 'Rejected')" ${data.status !== 'Pending' ? 'disabled style="opacity: 0.5;"' : ''}>Reject</button>
-                        </td>
-                    `;
-                    tableBody.appendChild(tr);
+                        const buildDocumentLink = (doc) => {
+                            const documentUrl = doc?.data_url || doc?.url || data.prescription_url || data.parent_id_url || null;
+                            if (!documentUrl) {
+                                return '<span style="color: #94A3B8;">No file</span>';
+                            }
+
+                            const isImage = doc?.mime_type?.startsWith('image/');
+                            if (isImage) {
+                                return `<a href="${documentUrl}" target="_blank" title="Open image"><img src="${documentUrl}" alt="Document preview" style="max-width: 80px; max-height: 60px; object-fit: cover; border-radius: 4px;" /></a>`;
+                            }
+
+                            return `<a href="${documentUrl}" target="_blank" style="color: #2563EB;">View</a>`;
+                        };
+
+                        const rxLink = buildDocumentLink(prescriptionDoc);
+                        const idLink = buildDocumentLink(idDoc);
+
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td>${dateString}</td>
+                            <td>
+                                <strong>${parentName}</strong><br>
+                                <span style="font-size: 0.8rem; color: #64748B;">${contactNumber}</span>
+                            </td>
+                            <td>
+                                ${infantName} ${nicuBadge}<br>
+                                <span style="font-size: 0.8rem; color: #64748B;">${diagnosis}</span>
+                            </td>
+                            <td><strong>${requestedVolume}</strong></td>
+                            <td>${rxLink} | ${idLink}</td>
+                            <td><span class="badge ${badgeClass}" id="status-${docId}">${data.status}</span></td>
+                            <td>
+                                <button class="btn-sm btn-approve" onclick="updateStatus('${docId}', 'Approved')" ${data.status !== 'Pending' ? 'disabled style="opacity: 0.5;"' : ''}>Approve</button>
+                                <button class="btn-sm btn-reject" onclick="updateStatus('${docId}', 'Rejected')" ${data.status !== 'Pending' ? 'disabled style="opacity: 0.5;"' : ''}>Reject</button>
+                            </td>
+                        `;
+                        tableBody.appendChild(tr);
+                    });
+
+                }, (error) => {
+                    console.error('Realtime listener error:', error);
+                    loader.innerHTML = '<span style="color: #DC2626;">Error loading data. Check console for details or verify Firestore rules.</span>';
                 });
 
             } catch (error) {
-                console.error("Error loading requests: ", error);
-                loader.innerHTML = '<span style="color: #DC2626;">Error loading data. Check console for details or verify Firestore rules.</span>';
+                console.error("Error initializing realtime listener: ", error);
+                loader.innerHTML = '<span style="color: #DC2626;">Error initializing listener. Check console for details.</span>';
             }
         };
 
@@ -253,8 +264,18 @@
             }
         };
 
-        // Load data automatically when the page opens
-        document.addEventListener('DOMContentLoaded', loadRequests);
+        // Ensure we have an auth context (anonymous) before starting listener
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                if (!auth.currentUser) {
+                    await signInAnonymously(auth);
+                }
+            } catch (e) {
+                console.warn('Anonymous sign-in failed for staff page (may still work if rules allow unauthenticated reads):', e);
+            }
+
+            loadRequests();
+        });
 
     </script>
 </body>

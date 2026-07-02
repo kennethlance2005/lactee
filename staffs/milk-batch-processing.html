@@ -98,10 +98,10 @@
             <ul>
                 <li><a href="staff-dashboard.html">Dashboard Summary</a></li>
                 <li><a href="beneficiary-requests.html">Milk Requests</a></li>
-                <li><a href="laboratory.html">Laboratory</a></li>
-                <li><a href="safe-inventory.html">Safe Inventory</a></li>
                 <li><a href="donor-management.html">Donor Profiles</a></li>
                 <li><a href="milk-batch-processing.html" class="active">Milk Batch Processing</a></li>
+                <li><a href="laboratory.html">Laboratory</a></li>
+                <li><a href="safe-inventory.html">Inventory</a></li>
             </ul>
         </nav>
         <div class="sidebar-footer">
@@ -281,8 +281,9 @@
                 donor_program: donorProgram,
                 donor_program_label: programLabels[donorProgram] || donorProgram,
                 collection_date: date,
-                volume_ml: Number(volume)
-            }, serverTimestamp());
+                volume_ml: Number(volume),
+                created_at: serverTimestamp()
+            };
 
             try {
                 const batchRef = await addDoc(collection(db, 'Milk_Batches'), payload);
