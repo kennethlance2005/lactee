@@ -10,7 +10,6 @@
     box-sizing: border-box;
 }
 
-<<<<<<< HEAD
 body {
     font-family: 'Karla', sans-serif;
     background-color: #F8FAFC;
@@ -44,20 +43,6 @@ input[type="button"] {
     background-size: 240% 240%;
     animation: heroGradientShift 16s ease infinite;
 }
-=======
-body {
-    background-color: #F8FAFC;
-    color: #334155;
-    line-height: 1.6;
-}
-
-.home-body {
-    min-height: 100vh;
-    background: linear-gradient(135deg, #304d6d 0%, #a7cced 34%, #d8ebfb 62%, #ffffff 82%, #304d6d 100%);
-    background-size: 240% 240%;
-    animation: heroGradientShift 16s ease infinite;
-}
->>>>>>> 526b85a (Co-authored-by: silas1218 <silas1218@users.noreply.github.com>)
 
 /* Navigation Bar */
 .navbar {
@@ -101,7 +86,6 @@ body {
     text-align: center;
 }
 
-<<<<<<< HEAD
 .btn-primary {
     background-color: #2563EB;
     color: white !important;
@@ -125,31 +109,6 @@ body {
     background-color: #F43F5E;
     color: white;
 }
-=======
-.btn-primary {
-    background-color: #2563EB;
-    color: white !important;
-}
-
-.home-body .navbar .btn-primary {
-    background-color: #f0c808;
-    color: white !important;
-    transition: transform 0.25s ease, box-shadow 0.25s ease;
-}
-
-.home-body .navbar .btn-primary:hover,
-.home-body .navbar .btn-primary:focus {
-    background-color: #f0c808;
-    color: white !important;
-    transform: translateY(-4px);
-    box-shadow: 0 0 28px rgba(240, 200, 8, 0.55), 0 12px 24px rgba(240, 200, 8, 0.28);
-}
-
-.btn-secondary {
-    background-color: #F43F5E;
-    color: white;
-}
->>>>>>> 526b85a (Co-authored-by: silas1218 <silas1218@users.noreply.github.com>)
 
 .btn-full {
     width: 100%;
@@ -157,7 +116,6 @@ body {
 }
 
 /* Hero Section */
-<<<<<<< HEAD
 .hero {
     background: linear-gradient(135deg, #304d6d 0%, #a7cced 34%, #d8ebfb 62%, #ffffff 82%, #304d6d 100%);
     background-size: 240% 240%;
@@ -165,38 +123,6 @@ body {
     padding: 5rem 5%;
     text-align: center;
 }
-=======
-.hero {
-    background: linear-gradient(135deg, #304d6d 0%, #a7cced 34%, #d8ebfb 62%, #ffffff 82%, #304d6d 100%);
-    background-size: 240% 240%;
-    animation: heroGradientShift 16s ease infinite;
-    padding: 5rem 5%;
-    text-align: center;
-}
-
-@keyframes heroGradientShift {
-    0% {
-        background-position: 0% 50%;
-    }
-    50% {
-        background-position: 100% 50%;
-    }
-    100% {
-        background-position: 0% 50%;
-    }
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .home-body,
-    .hero {
-        animation: none;
-    }
-
-    .faq-card-inner {
-        transition: none;
-    }
-}
->>>>>>> 526b85a (Co-authored-by: silas1218 <silas1218@users.noreply.github.com>)
 
 @keyframes heroGradientShift {
     0% {
@@ -252,6 +178,9 @@ body {
 
 /* FAQ Flip Cards */
 .faq {
+    --faq-accent: #1768ac;
+    --faq-accent-glow: rgba(23, 104, 172, 0.7);
+    --faq-accent-shadow: rgba(23, 104, 172, 0.2);
     padding-top: 2.5rem !important;
     padding-bottom: 2.5rem !important;
 }
@@ -291,7 +220,7 @@ body {
 }
 
 .faq-flip-card.is-flipped .faq-card-face {
-    border-color: #a7cced;
+    border-color: var(--faq-accent);
 }
 
 .faq-card-face {
@@ -307,7 +236,7 @@ body {
     backface-visibility: hidden;
     overflow: hidden;
     box-shadow: 0 16px 32px rgba(15, 23, 42, 0.12);
-    border: 1px solid #a7cced;
+    border: 1px solid var(--faq-accent);
     transition: box-shadow 0.25s ease, border-color 0.25s ease;
 }
 
@@ -324,7 +253,7 @@ body {
     height: 36px;
     margin-top: 1rem;
     border-radius: 50%;
-    background: #a7cced;
+    background: var(--faq-accent);
     color: white;
     font-size: 1.5rem;
     font-weight: 700;
@@ -333,7 +262,7 @@ body {
 
 .faq-card-back {
     transform: rotateY(180deg);
-    background: linear-gradient(180deg, #a7cced 0%, #ffffff 100%);
+    background: #ffffff;
     color: #1E293B;
 }
 
@@ -366,12 +295,12 @@ body {
 
 .faq-flip-card:hover .faq-card-face,
 .faq-flip-card:focus .faq-card-face {
-    box-shadow: 0 0 28px rgba(167, 204, 237, 0.7), 0 20px 38px rgba(48, 77, 109, 0.16);
+    box-shadow: 0 0 28px var(--faq-accent-glow), 0 20px 38px var(--faq-accent-shadow);
 }
 
 .faq-flip-card.is-flipped:hover .faq-card-face,
 .faq-flip-card.is-flipped:focus .faq-card-face {
-    box-shadow: 0 0 30px rgba(167, 204, 237, 0.7), 0 20px 38px rgba(48, 77, 109, 0.18);
+    box-shadow: 0 0 30px var(--faq-accent-glow), 0 20px 38px var(--faq-accent-shadow);
 }
 
 .faq-flip-card:hover,
@@ -384,13 +313,13 @@ body {
 }
 
 .faq-flip-card:focus .faq-card-face {
-    border-color: #a7cced;
+    border-color: var(--faq-accent);
 }
 
 .faq-flip-card.is-flipped .faq-card-face,
 .faq-flip-card.is-flipped:hover .faq-card-face,
 .faq-flip-card.is-flipped:focus .faq-card-face {
-    border-color: #a7cced;
+    border-color: var(--faq-accent);
 }
 
 .hero .btn-secondary {
@@ -776,7 +705,6 @@ body {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Softer shadow on hover */
 }
 
-<<<<<<< HEAD
 /* Mobile Responsiveness */
 @media (max-width: 1200px) {
     .faq-flip-list {
@@ -829,51 +757,6 @@ body {
     .availability-form {
         flex-direction: column;
     }
-=======
-/* Mobile Responsiveness */
-@media (max-width: 1200px) {
-    .faq-flip-list {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-    .faq-flip-card:nth-child(4) {
-        grid-column: 1 / span 1;
-    }
-    .faq-flip-card:nth-child(5) {
-        grid-column: 2 / span 1;
-    }
-}
-
-@media (max-width: 768px) {
-    .navbar {
-        flex-direction: column;
-        gap: 1rem;
-    }
-    .faq {
-        padding-top: 2rem !important;
-        padding-bottom: 2rem !important;
-    }
-    .faq-flip-list {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-    .faq-flip-card:nth-child(4),
-    .faq-flip-card:nth-child(5) {
-        grid-column: auto;
-    }
-    .faq-flip-card,
-    .faq-card-inner {
-        min-height: 230px;
-    }
-    .faq-card-front h3 {
-        font-size: 0.78rem;
-        -webkit-line-clamp: 3;
-    }
-    .faq-card-back p {
-        font-size: 0.72rem;
-    }
-    .availability-form {
-        flex-direction: column;
-    }
->>>>>>> 526b85a (Co-authored-by: silas1218 <silas1218@users.noreply.github.com>)
     .form-group {
         width: 100%;
     }
@@ -947,7 +830,6 @@ textarea {
 }
 
 /* Mobile Adjustments for Forms */
-<<<<<<< HEAD
 @media (max-width: 600px) {
     .faq-flip-list {
         grid-template-columns: 1fr;
@@ -978,26 +860,6 @@ textarea {
     .form-row {
         flex-direction: column;
         gap: 1rem;
-=======
-@media (max-width: 600px) {
-    .faq-flip-list {
-        grid-template-columns: 1fr;
-    }
-    .faq-flip-card,
-    .faq-card-inner {
-        min-height: 190px;
-    }
-    .faq-card-front h3 {
-        font-size: 0.95rem;
-        -webkit-line-clamp: 3;
-    }
-    .faq-card-back p {
-        font-size: 0.82rem;
-    }
-    .form-row {
-        flex-direction: column;
-        gap: 1rem;
->>>>>>> 526b85a (Co-authored-by: silas1218 <silas1218@users.noreply.github.com>)
     }
     .checkbox-group {
         margin-top: 0;
@@ -1187,8 +1049,4 @@ textarea {
     .sidebar { position: relative; width: 100%; height: auto; }
     .dashboard-main { margin-left: 0; padding: 1.5rem; }
     .scanner-form { flex-direction: column; align-items: stretch; }
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> 526b85a (Co-authored-by: silas1218 <silas1218@users.noreply.github.com>)
