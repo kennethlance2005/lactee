@@ -10,10 +10,10 @@ body {
     background-color: #F8FAFC;
     color: #334155;
     line-height: 1.6;
+    padding-bottom: 5rem; /* Add minimal space for scrolling */
 }
 
 .home-body {
-    min-height: 100vh;
     background: linear-gradient(135deg, #304d6d 0%, #a7cced 34%, #d8ebfb 62%, #ffffff 82%, #304d6d 100%);
     background-size: 240% 240%;
     animation: heroGradientShift 16s ease infinite;
@@ -458,7 +458,7 @@ body {
     justify-content: center;
     align-items: center;
     min-height: 100vh;
-    background-color: #E0F2FE;
+    background-color: #a7cced;
     position: relative;
     padding-top: 80px; /* Buffer for the absolute navbar */
 }
@@ -467,7 +467,7 @@ body {
     background: white;
     padding: 2.5rem;
     border-radius: 8px;
-    box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.2);
     width: 100%;
     max-width: 400px;
 }
@@ -479,6 +479,8 @@ body {
 
 .login-header h2 {
     color: #1E293B;
+    font-weight: 700; /* Matching homepage title */
+    letter-spacing: 0.025em; /* Subtle letter spacing */
 }
 
 .login-header p {
@@ -493,8 +495,27 @@ body {
 }
 
 .login-footer a {
-    color: #2563EB;
+    color: #495057; /* Muted dark slate gray */
     text-decoration: none;
+    transition: text-decoration 0.2s ease;
+}
+
+.login-footer a:hover {
+    text-decoration: underline;
+}
+
+/* Specific styles for the login button */
+.login-form .btn-primary.btn-full {
+    background-color: #f0c808;
+    color: #212529 !important; /* Dark navy/charcoal */
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.login-form .btn-primary.btn-full:hover,
+.login-form .btn-primary.btn-full:focus {
+    background-color: #f0c808; /* Keep the same color on hover */
+    color: #212529 !important; /* Keep text color on hover */
+    transform: translateY(-2px); /* Subtle lift */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Softer shadow on hover */
 }
 
 /* Mobile Responsiveness */

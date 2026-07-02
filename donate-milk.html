@@ -8,12 +8,30 @@
     <link rel="stylesheet" href="assets/css/styles.css">
     <style>
         /* Base Styles */
-        body { font-family: system-ui, -apple-system, sans-serif; color: #2d3748; line-height: 1.5; padding: 20px; }
-        .form-section { max-width: 1000px; margin: 0 auto; }
+        body { 
+            font-family: system-ui, -apple-system, sans-serif; 
+            color: #2d3748; 
+            line-height: 1.5; 
+            background-color: #a7cced; 
+        }
+        .form-section { 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+        }
+        .container .card {
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+            border-radius: 0.5rem !important;
+        }
         .program-options { display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1.5rem; }
         .program-card { border: 1px solid #cbd5e0; padding: 1rem; border-radius: 8px; cursor: pointer; transition: all 0.2s; }
         .program-card:hover { border-color: #4a5568; }
-        .program-card.selected { border-color: #3182ce; background-color: #ebf8ff; }
+        .program-card.selected { 
+            border-color: #f0c808; 
+            background-color: #fffbeb; 
+            border-width: 2px;
+        }
         .program-card input[type="radio"] { margin-right: 10px; }
         .program-details { font-size: 0.85rem; color: #718096; margin-left: 25px; margin-top: 4px; }
         .step-header { margin-top: 2rem; margin-bottom: 1.5rem; padding-bottom: 0.5rem; border-bottom: 2px solid #e2e8f0; }
@@ -24,17 +42,42 @@
 
         /* Form Layout */
         fieldset { border: 1px solid #e2e8f0; border-radius: 6px; padding: 1.5rem; margin-bottom: 1.5rem; }
-        legend { font-weight: bold; color: #4a5568; padding: 0 5px; }
+        legend { font-weight: bold; color: #1E293B; padding: 0 5px; }
         .form-row-3, .form-row-2 { display: flex; gap: 1rem; margin-bottom: 1rem; }
         .form-row-3 > .form-group, .form-row-2 > .form-group { flex: 1; }
         .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 500; font-size: 0.9rem; }
         .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 0.5rem; border: 1px solid #cbd5e0; border-radius: 4px; box-sizing: border-box; }
         .checkbox-group label { display: block; margin-bottom: 0.5rem; font-weight: normal; }
-        .btn-primary { background-color: #3182ce; color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; }
-        .btn-primary:hover { background-color: #2b6cb0; }
+        .btn-primary { 
+            background-color: #f0c808; 
+            color: #212529; 
+            padding: 0.75rem 1.5rem; 
+            border: none; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            width: 100%; 
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
+        }
+        .btn-primary:hover { 
+            background-color: #f0c808;
+            color: #212529;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
     </style>
 </head>
 <body>
+    <header class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+        <div class="container">
+            <a class="navbar-brand logo" href="index.html">HMBMS</a>
+            <nav class="ms-auto">
+                <ul class="navbar-nav flex-row gap-3">
+                    <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
     <section class="form-section py-5">
         <div class="container">
             <div class="card shadow-sm border-0">
@@ -136,10 +179,6 @@
                             <div class="form-group"><label>Last Name</label><input type="text" name="mw_last_name"></div>
                         </div>
                         <div class="form-row-2">
-                            <div class="form-group">
-                                <label>Patient ID / Hospital Record Number</label>
-                                <input type="text" name="mw_patient_id" placeholder="e.g., PAT-123456">
-                            </div>
                             <div class="form-group">
                                 <label>Select Primary Milk Bank Facility</label>
                                 <select name="mw_hospital_site">
@@ -301,23 +340,35 @@
             });
         }
 
+        function getProgramLabel(category) {
+            return {
+                supsup_todo: 'Supsup Todo (Community-Based)',
+                milky_way: 'Milky-Way (Hospital-Based)',
+                moms_act: "Mom's Act (Household-Based)"
+            }[category] || category;
+        }
+
         donorForm.addEventListener('submit', async function (event) {
             event.preventDefault();
 
             const formData = new FormData(donorForm);
             const activeCategory = formData.get('program_category');
             const msgEl = document.getElementById('donor-form-message');
+            const applicationId = `APP-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`;
 
             const payload = {
                 record_type: 'donor_profile',
+                application_id: applicationId,
                 program_category: activeCategory,
+                program_category_label: getProgramLabel(activeCategory),
                 screening_status: 'Pending',
                 created_at: serverTimestamp(),
                 updated_at: serverTimestamp(),
                 source: 'public-donation',
                 first_name: '',
                 last_name: '',
-                contact_number: ''
+                contact_number: '',
+                full_name: ''
             };
 
             for (let [key, value] of formData.entries()) {
@@ -336,6 +387,7 @@
                 payload.first_name = formData.get('mw_first_name') || '';
                 payload.last_name = formData.get('mw_last_name') || '';
                 payload.contact_number = formData.get('mw_patient_id') || '';
+                payload.mw_patient_id = formData.get('mw_patient_id') || '';
                 payload.mw_sync_consent = formData.has('mw_sync_consent');
             } else if (activeCategory === 'moms_act') {
                 payload.first_name = formData.get('ma_first_name') || '';
@@ -343,6 +395,8 @@
                 payload.contact_number = formData.get('ma_contact_number') || '';
                 payload.ma_call_consent = formData.has('ma_call_consent');
             }
+
+            payload.full_name = `${payload.first_name} ${payload.last_name}`.trim();
 
             msgEl.textContent = 'Submitting application...';
             msgEl.style.color = '#2563EB';

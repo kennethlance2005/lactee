@@ -67,12 +67,13 @@
         .data-table th, .data-table td { padding: 0.9rem 1.25rem; vertical-align: middle; }
         .data-table td { text-align: left; }
         /* Column widths to keep values aligned */
-        .data-table th:nth-child(1), .data-table td:nth-child(1) { width: 30%; }
-        .data-table th:nth-child(2), .data-table td:nth-child(2) { width: 30%; text-align: left; }
-        .data-table th:nth-child(3), .data-table td:nth-child(3) { width: 15%; text-align: left; }
-        .data-table th:nth-child(4), .data-table td:nth-child(4) { width: 10%; text-align: center; }
+        .data-table th:nth-child(1), .data-table td:nth-child(1) { width: 22%; }
+        .data-table th:nth-child(2), .data-table td:nth-child(2) { width: 20%; text-align: left; }
+        .data-table th:nth-child(3), .data-table td:nth-child(3) { width: 18%; text-align: left; }
+        .data-table th:nth-child(4), .data-table td:nth-child(4) { width: 14%; text-align: center; }
         .data-table th:nth-child(5), .data-table td:nth-child(5) { width: 10%; text-align: center; }
-        .data-table th:nth-child(6), .data-table td:nth-child(6) { width: 5%; text-align: center; }
+        .data-table th:nth-child(6), .data-table td:nth-child(6) { width: 10%; text-align: center; }
+        .data-table th:nth-child(7), .data-table td:nth-child(7) { width: 6%; text-align: center; }
         /* Ellipsis for long names to keep columns aligned */
         .data-table td:nth-child(1),
         .data-table td:nth-child(2),
@@ -130,6 +131,15 @@
                             <input type="text" id="donor_dtn" placeholder="e.g., DTN-884" required>
                         </div>
                     <div class="form-group">
+                        <label>Donor Program *</label>
+                        <select id="donor_program" required>
+                            <option value="" disabled selected>Select program...</option>
+                            <option value="supsup_todo">Supsup Todo (Community-Based)</option>
+                            <option value="milky_way">Milky-Way (Hospital-Based)</option>
+                            <option value="moms_act">Mom's Act (Household-Based)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
                         <label>Collection Date *</label>
                         <input type="date" id="collection_date" required>
                     </div>
@@ -156,6 +166,7 @@
                     <tr>
                         <th>Batch / Barcode</th>
                         <th>Full Name</th>
+                        <th>Program</th>
                         <th>Donor DTN</th>
                         <th>Volume</th>
                         <th>Status</th>
@@ -163,7 +174,7 @@
                     </tr>
                 </thead>
                 <tbody id="batch-list-body">
-                    <tr><td colspan="6" style="text-align: center;">Loading batches...</td></tr>
+                    <tr><td colspan="7" style="text-align: center;">Loading batches...</td></tr>
                 </tbody>
             </table>
         </section>
@@ -250,15 +261,24 @@
             if (!(await ensureStaffAccess())) return;
             const dtn = document.getElementById('donor_dtn').value.trim();
             const donorName = document.getElementById('donor_name').value.trim();
+            const donorProgram = document.getElementById('donor_program').value;
             const date = document.getElementById('collection_date').value;
             const volume = document.getElementById('volume').value;
             const batchCode = generateBatchCode(dtn, date);
+
+            const programLabels = {
+                supsup_todo: 'Supsup Todo (Community-Based)',
+                milky_way: 'Milky-Way (Hospital-Based)',
+                moms_act: "Mom's Act (Household-Based)"
+            };
 
             const payload = {
                 batch_id: batchCode,
                 barcode_id: batchCode,
                 donor_dtn: dtn,
                 full_name: donorName,
+                donor_program: donorProgram,
+                donor_program_label: programLabels[donorProgram] || donorProgram,
                 collection_date: date,
                 volume_ml: Number(volume),
                 state: 'Pasteurization',
@@ -305,6 +325,7 @@
                     <tr id="batch-row-${id}">
                         <td><strong>${data.batch_id || data.barcode_id || id}</strong></td>
                         <td>${data.full_name || data.donor_name || 'N/A'}</td>
+                        <td>${data.donor_program_label || data.donor_program || 'N/A'}</td>
                         <td>${data.donor_dtn || 'N/A'}</td>
                         <td>${data.volume_ml || data.volume || 0} mL</td>
                         <td>${data.state || data.status || 'Pending'}</td>

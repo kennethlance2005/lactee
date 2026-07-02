@@ -144,6 +144,12 @@ if(logoutBtn) {
             pendingTbody.innerHTML = ''; 
             activeTbody.innerHTML = '';
 
+            const programLabelMap = {
+                supsup_todo: 'Supsup Todo (Community-Based)',
+                milky_way: 'Milky-Way (Hospital-Based)',
+                moms_act: "Mom's Act (Household-Based)"
+            };
+
             const snap = await getDocs(collection(db, "Donor_Profiles"));
             
             if(snap.empty) {
@@ -153,12 +159,15 @@ if(logoutBtn) {
             snap.forEach(docSnap => {
                 const data = docSnap.data();
                 
+                const applicantName = data.full_name || `${data.first_name || ''} ${data.last_name || ''}`.trim() || 'N/A';
+                const programLabel = data.program_category_label || programLabelMap[data.program_category] || data.program_category;
+
                 if (data.screening_status === 'Passed') {
                     activeTbody.innerHTML += `
                         <tr>
                             <td><strong>${data.dtn || 'N/A'}</strong></td>
-                            <td>${data.first_name} ${data.last_name}</td>
-                            <td>${data.program_category}</td>
+                            <td>${applicantName}</td>
+                            <td>${programLabel}</td>
                             <td><span class="badge badge-passed">Cleared</span></td>
                         </tr>
                     `;
@@ -166,8 +175,8 @@ if(logoutBtn) {
                     pendingTbody.innerHTML += `
                         <tr id="donor-${docSnap.id}">
                             <td>${data.application_id || 'N/A'}</td>
-                            <td>${data.first_name} ${data.last_name}</td>
-                            <td>${data.program_category}</td>
+                            <td>${applicantName}</td>
+                            <td>${programLabel}</td>
                             <td>${data.contact_number || 'N/A'}</td>
                             <td>
                                 <button class="btn-primary" style="padding: 5px 10px;" onclick="clearDonor('${docSnap.id}')">Clear & Assign DTN</button>
