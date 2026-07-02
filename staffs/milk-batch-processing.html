@@ -96,7 +96,7 @@
             <ul>
                 <li><a href="staff-dashboard.html">Dashboard Summary</a></li>
                 <li><a href="beneficiary-requests.html">Milk Requests</a></li>
-                <li><a href="lab-verifications.html">Lab Verifications</a></li>
+                <li><a href="laboratory.html">Laboratory</a></li>
                 <li><a href="safe-inventory.html">Safe Inventory</a></li>
                 <li><a href="donor-management.html">Donor Profiles</a></li>
                 <li><a href="milk-batch-processing.html" class="active">Milk Batch Processing</a></li>
@@ -209,6 +209,7 @@
         </section>
     </main>
 
+<<<<<<< HEAD
     <script>
         // Generating Barcode Logic
         document.getElementById('intake_form').addEventListener('submit', function(e) {
@@ -220,6 +221,68 @@
             
             document.getElementById('barcode-display-area').style.display = 'block';
             JsBarcode("#new-batch-barcode", batchCode, { format: "CODE128", width: 2, height: 60, displayValue: true });
+=======
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, signInAnonymously, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc, serverTimestamp, query, orderBy, limit } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        import '../assets/js/batch-utils.js';
+
+        const firebaseConfig = {
+            apiKey: 'AIzaSyCgtXZAe_-Wj0D4Pd-t2BYAU3E2faUF86M',
+            authDomain: 'hmbms-f70b5.firebaseapp.com',
+            projectId: 'hmbms-f70b5',
+            storageBucket: 'hmbms-f70b5.firebasestorage.app',
+            messagingSenderId: '276256441806',
+            appId: '1:276256441806:web:2e3db876c0dddbfb37979f',
+            measurementId: 'G-XD87JGC0MZ'
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        const intakeForm = document.getElementById('intake_form');
+        const batchMessage = document.getElementById('batch-message');
+
+        function generateBatchCode(dtn, date) {
+            const uniqueSuffix = (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}${Math.random().toString(36).slice(2, 8)}`)
+                .replace(/-/g, '')
+                .slice(0, 8)
+                .toUpperCase();
+            const donorPart = (dtn || 'DTN').replace(/\s+/g, '-').toUpperCase();
+            const datePart = date.replace(/-/g, '');
+            return `${donorPart}-${datePart}-${uniqueSuffix}`;
+        }
+
+        async function ensureStaffAccess() {
+            try {
+                await auth.authStateReady();
+                if (!auth.currentUser) {
+                    await signInAnonymously(auth);
+                }
+                return true;
+            } catch (error) {
+                console.error('Authentication failed:', error);
+                window.location.href = 'login.html';
+                return false;
+            }
+        }
+
+        // Update sidebar with current user and wire logout
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                const nameEl = document.getElementById('current-user') || document.querySelector('.sidebar-footer strong');
+                if (nameEl) {
+                    // Prefer displayName or email local part; fall back to 'Staff'
+                    const display = user.displayName || user.email || user.uid || 'Staff';
+                    nameEl.textContent = String(display).split('@')[0];
+                }
+            } else {
+                // Not signed in — redirect to login
+                window.location.href = 'login.html';
+            }
+>>>>>>> 2453deb (Co-authored-by: kennethlance2005 <kennethlance2005@users.noreply.github.com>)
         });
 
         // Scanner Logic
@@ -234,6 +297,7 @@
             const volume = document.getElementById('volume').value;
             const batchCode = generateBatchCode(dtn, date);
 
+<<<<<<< HEAD
             const programLabels = {
                 supsup_todo: 'Supsup Todo (Community-Based)',
                 milky_way: 'Milky-Way (Hospital-Based)',
@@ -241,6 +305,9 @@
             };
 
             const payload = {
+=======
+            const payload = window.LacteeBatchUtils.buildInitialBatchPayload({
+>>>>>>> 2453deb (Co-authored-by: kennethlance2005 <kennethlance2005@users.noreply.github.com>)
                 batch_id: batchCode,
                 barcode_id: batchCode,
                 donor_dtn: dtn,
@@ -248,18 +315,20 @@
                 donor_program: donorProgram,
                 donor_program_label: programLabels[donorProgram] || donorProgram,
                 collection_date: date,
-                volume_ml: Number(volume),
-                state: 'Pasteurization',
-                status: 'Pasteurization',
-                lab_result: 'Waiting',
-                storage_location: 'Pending Intake',
-                screening_status: 'Waiting',
-                created_at: serverTimestamp()
-            };
+                volume_ml: Number(volume)
+            }, serverTimestamp());
 
             try {
-                await addDoc(collection(db, 'Milk_Batches'), payload);
-                batchMessage.textContent = `Batch ${batchCode} saved to Firestore.`;
+                const batchRef = await addDoc(collection(db, 'Milk_Batches'), payload);
+                await addDoc(collection(db, 'Laboratory_Verifications'), {
+                    batch_id: batchCode,
+                    batch_doc_id: batchRef.id,
+                    test_result: 'Waiting',
+                    test_type: 'Pending Lab Testing',
+                    status: 'Pending',
+                    created_at: serverTimestamp()
+                });
+                batchMessage.textContent = `Batch ${batchCode} saved to Firestore and queued for laboratory testing.`;
                 batchMessage.style.color = '#047857';
                 document.getElementById('barcode-display-area').style.display = 'block';
                 JsBarcode('#new-batch-barcode', batchCode, { format: 'CODE128', width: 2, height: 60, displayValue: true });
