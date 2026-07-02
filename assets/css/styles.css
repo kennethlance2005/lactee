@@ -11,13 +11,17 @@
 }
 
 body {
+<<<<<<< HEAD
     font-family: 'Karla', sans-serif;
+=======
+>>>>>>> 4f47089 (Co-authored-by: silas1218 <silas1218@users.noreply.github.com>)
     background-color: #F8FAFC;
     color: #334155;
     line-height: 1.6;
     padding-bottom: 5rem; /* Add minimal space for scrolling */
 }
 
+<<<<<<< HEAD
 h1,
 h2,
 h3,
@@ -38,6 +42,8 @@ input[type="button"] {
     font-weight: 500;
 }
 
+=======
+>>>>>>> 4f47089 (Co-authored-by: silas1218 <silas1218@users.noreply.github.com>)
 .home-body {
     background: linear-gradient(135deg, #304d6d 0%, #a7cced 34%, #d8ebfb 62%, #ffffff 82%, #304d6d 100%);
     background-size: 240% 240%;
@@ -322,6 +328,7 @@ input[type="button"] {
     border-color: var(--faq-accent);
 }
 
+<<<<<<< HEAD
 .hero .btn-secondary {
     background-color: #f0c808;
     color: white;
@@ -483,6 +490,8 @@ input[type="button"] {
     border-color: var(--faq-accent);
 }
 
+=======
+>>>>>>> 4f47089 (Co-authored-by: silas1218 <silas1218@users.noreply.github.com>)
 /* Instructions Section */
 .instructions {
     background: linear-gradient(135deg, #1768ac 0%, #0b3456 48%, #041422 100%);
