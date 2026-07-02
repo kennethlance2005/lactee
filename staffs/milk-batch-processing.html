@@ -98,7 +98,7 @@
             <ul>
                 <li><a href="staff-dashboard.html">Dashboard Summary</a></li>
                 <li><a href="beneficiary-requests.html">Milk Requests</a></li>
-                <li><a href="lab-verifications.html">Lab Verifications</a></li>
+                <li><a href="laboratory.html">Laboratory</a></li>
                 <li><a href="safe-inventory.html">Safe Inventory</a></li>
                 <li><a href="donor-management.html">Donor Profiles</a></li>
                 <li><a href="milk-batch-processing.html" class="active">Milk Batch Processing</a></li>
@@ -186,6 +186,7 @@
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
         import { getAuth, signInAnonymously, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
         import { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc, serverTimestamp, query, orderBy, limit } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        import '../assets/js/batch-utils.js';
 
         const firebaseConfig = {
             apiKey: 'AIzaSyCgtXZAe_-Wj0D4Pd-t2BYAU3E2faUF86M',
@@ -280,18 +281,20 @@
                 donor_program: donorProgram,
                 donor_program_label: programLabels[donorProgram] || donorProgram,
                 collection_date: date,
-                volume_ml: Number(volume),
-                state: 'Pasteurization',
-                status: 'Pasteurization',
-                lab_result: 'Waiting',
-                storage_location: 'Pending Intake',
-                screening_status: 'Waiting',
-                created_at: serverTimestamp()
-            };
+                volume_ml: Number(volume)
+            }, serverTimestamp());
 
             try {
-                await addDoc(collection(db, 'Milk_Batches'), payload);
-                batchMessage.textContent = `Batch ${batchCode} saved to Firestore.`;
+                const batchRef = await addDoc(collection(db, 'Milk_Batches'), payload);
+                await addDoc(collection(db, 'Laboratory_Verifications'), {
+                    batch_id: batchCode,
+                    batch_doc_id: batchRef.id,
+                    test_result: 'Waiting',
+                    test_type: 'Pending Lab Testing',
+                    status: 'Pending',
+                    created_at: serverTimestamp()
+                });
+                batchMessage.textContent = `Batch ${batchCode} saved to Firestore and queued for laboratory testing.`;
                 batchMessage.style.color = '#047857';
                 document.getElementById('barcode-display-area').style.display = 'block';
                 JsBarcode('#new-batch-barcode', batchCode, { format: 'CODE128', width: 2, height: 60, displayValue: true });
