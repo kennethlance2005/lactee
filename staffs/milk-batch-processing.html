@@ -183,27 +183,24 @@
     </main>
 
     <script type="module">
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-        import { getAuth, signInAnonymously, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-        import { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc, serverTimestamp, query, orderBy, limit } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        import { db } from '../assets/js/firebase-config.js';
+        import { ensureAnonymousAuth, updateStaffNameDisplay, bindStaffLogout, getStaffDisplayId } from '../assets/js/staff-utils.js';
+        import { collection, addDoc, getDocs, updateDoc, deleteDoc, doc, serverTimestamp, query, orderBy, limit } from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js';
         import '../assets/js/batch-utils.js';
-
-        const firebaseConfig = {
-            apiKey: 'AIzaSyCgtXZAe_-Wj0D4Pd-t2BYAU3E2faUF86M',
-            authDomain: 'hmbms-f70b5.firebaseapp.com',
-            projectId: 'hmbms-f70b5',
-            storageBucket: 'hmbms-f70b5.firebasestorage.app',
-            messagingSenderId: '276256441806',
-            appId: '1:276256441806:web:2e3db876c0dddbfb37979f',
-            measurementId: 'G-XD87JGC0MZ'
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
 
         const intakeForm = document.getElementById('intake_form');
         const batchMessage = document.getElementById('batch-message');
+
+        async function initBatchProcessingPage() {
+            try {
+                await ensureAnonymousAuth();
+            } catch (error) {
+                console.error('Batch processing page auth failed:', error);
+            }
+            updateStaffNameDisplay();
+            bindStaffLogout();
+            loadBatches();
+        }
 
         function generateBatchCode(dtn, date) {
             const uniqueSuffix = (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}${Math.random().toString(36).slice(2, 8)}`)
@@ -217,48 +214,21 @@
 
         async function ensureStaffAccess() {
             try {
-                await auth.authStateReady();
-                if (!auth.currentUser) {
-                    await signInAnonymously(auth);
-                }
+                await ensureAnonymousAuth();
                 return true;
             } catch (error) {
                 console.error('Authentication failed:', error);
-                window.location.href = 'login.html';
+                batchMessage.textContent = 'Authentication failed. Please enable anonymous sign-in in Firebase Authentication.';
+                batchMessage.style.color = '#dc2626';
                 return false;
             }
         }
 
-        // Update sidebar with current user and wire logout
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                const nameEl = document.getElementById('current-user') || document.querySelector('.sidebar-footer strong');
-                if (nameEl) {
-                    // Prefer displayName or email local part; fall back to 'Staff'
-                    const display = user.displayName || user.email || user.uid || 'Staff';
-                    nameEl.textContent = String(display).split('@')[0];
-                }
-            } else {
-                // Not signed in — redirect to login
-                window.location.href = 'login.html';
-            }
-        });
-
-        const logoutBtn = document.querySelector('.logout-btn');
-        if (logoutBtn) {
-            logoutBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                signOut(auth).then(() => {
-                    window.location.href = 'login.html';
-                }).catch((err) => {
-                    console.error('Sign out failed:', err);
-                    window.location.href = 'login.html';
-                });
-            });
-        }
+        document.addEventListener('DOMContentLoaded', initBatchProcessingPage);
 
         intakeForm.addEventListener('submit', async function (e) {
             e.preventDefault();
+            batchMessage.textContent = '';
             if (!(await ensureStaffAccess())) return;
             const dtn = document.getElementById('donor_dtn').value.trim();
             const donorName = document.getElementById('donor_name').value.trim();
@@ -282,6 +252,12 @@
                 donor_program_label: programLabels[donorProgram] || donorProgram,
                 collection_date: date,
                 volume_ml: Number(volume),
+                state: 'Pending Lab Testing',
+                status: 'Pending Lab Testing',
+                lab_result: 'Waiting',
+                screening_status: 'Pending Lab Testing',
+                storage_location: 'Pending Lab Testing',
+                ready_for_storage: false,
                 created_at: serverTimestamp()
             };
 
@@ -303,9 +279,7 @@
                 loadBatches();
             } catch (error) {
                 console.error('Failed to save batch:', error);
-                const message = error?.code === 'permission-denied'
-                    ? 'Firestore permissions are blocking the batch save. Please publish the Firestore rules and enable anonymous sign-in in Authentication.'
-                    : error?.message || 'Could not save the batch. Please try again.';
+                const message = error?.message || 'Could not save the batch. Please try again.';
                 batchMessage.textContent = message;
                 batchMessage.style.color = '#dc2626';
             }

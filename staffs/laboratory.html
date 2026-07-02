@@ -57,17 +57,13 @@
                         <option value="">All Stages</option>
                     </select>
                 </div>
-                <div class="filter-item">
-                    <label>&nbsp;</label>
-                    <button id="clear-filters" class="btn-sm btn-outline">Clear Filters</button>
-                </div>
             </div>
 
             <table class="data-table">
                 <thead>
                     <tr>
                         <th>Batch ID / Barcode</th>
-                        <th>Milk Name</th>
+                        <th>Name</th>
                         <th>Program</th>
                         <th>Lab Stage</th>
                         <th>Test Result</th>
@@ -102,56 +98,25 @@
     </style>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, query, where, getDocs, doc, updateDoc, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { db } from "../assets/js/firebase-config.js";
+        import { ensureAnonymousAuth, updateStaffNameDisplay, bindStaffLogout, getStaffDisplayId } from "../assets/js/staff-utils.js";
         import "../assets/js/batch-utils.js";
-
-        // TODO: Replace with your actual Firebase config
-       const firebaseConfig = {
-  apiKey: "AIzaSyCgtXZAe_-Wj0D4Pd-t2BYAU3E2faUF86M",
-  authDomain: "hmbms-f70b5.firebaseapp.com",
-  projectId: "hmbms-f70b5",
-  storageBucket: "hmbms-f70b5.firebasestorage.app",
-  messagingSenderId: "276256441806",
-  appId: "1:276256441806:web:2e3db876c0dddbfb37979f",
-  measurementId: "G-XD87JGC0MZ"
-};
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-
-const auth = getAuth(app);
-
-// Global variable to hold the user ID for your database inserts
-window.currentUserEmail = null; 
-
-onAuthStateChanged(auth, (user) => {
-    if (user) {
-        // User is signed in.
-        window.currentUserEmail = user.email;
-        
-        // Update the UI Sidebar dynamically
-        const nameDisplay = document.querySelector('.sidebar-footer strong');
-        if(nameDisplay) nameDisplay.textContent = user.email.split('@')[0]; // Quick formatting
-        
-    } else {
-        // User is NOT signed in. Kick them out!
-        window.location.href = "login.html";
-    }
-});
-
-// Attach a real logout function to your logout button
-const logoutBtn = document.querySelector('.logout-btn');
-if(logoutBtn) {
-    logoutBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        signOut(auth).then(() => {
-            window.location.href = "login.html";
-        });
-    });
-}
+        import { collection, getDocs, doc, updateDoc, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 
         let pendingBatchesCache = [];
+
+        async function initLaboratoryPage() {
+            try {
+                await ensureAnonymousAuth();
+            } catch (error) {
+                console.error('Laboratory page auth failed:', error);
+            }
+
+            updateStaffNameDisplay();
+            bindStaffLogout();
+            await loadPendingBatches();
+            setupFilterListeners();
+        }
 
         async function loadPendingBatches() {
             const tbody = document.getElementById('pending-batches-tbody');
@@ -182,7 +147,7 @@ if(logoutBtn) {
             batches.forEach(batch => {
                 const batchDocId = batch.id;
                 const data = batch;
-                const currentStage = data.state || data.status || 'Pasteurization';
+                const currentStage = data.lab_stage || data.state || data.status || 'Pasteurization';
                 const programLabel = data.program_type || data.donor_program_label || data.donor_program || 'Unknown';
                 tbody.innerHTML += `
                     <tr id="row-${batchDocId}">
@@ -217,9 +182,9 @@ if(logoutBtn) {
 
             const programOptions = [
                 { value: '', label: 'All Programs' },
-                { value: 'supsup todo', label: "supsup todo" },
-                { value: 'milky way', label: 'milky way' },
-                { value: "mom's act", label: "mom's act" }
+                { value: 'supsup_todo', label: 'Supsup Todo (Community-Based)' },
+                { value: 'milky_way', label: 'Milky-Way (Hospital-Based)' },
+                { value: 'moms_act', label: "Mom's Act (Household-Based)" }
             ];
 
             const stageOptions = [
@@ -244,16 +209,18 @@ if(logoutBtn) {
             const selectedStage = document.getElementById('stage-filter').value;
 
             const filtered = pendingBatchesCache.filter(batch => {
-                const programLabel = (batch.program_type || batch.donor_program_label || batch.donor_program || 'Unknown').toString();
-                const stage = (batch.state || batch.status || 'Pasteurization').toString();
-                const parentName = (batch.full_name || batch.batch_name || '').toString();
+                const storedProgram = (batch.donor_program || batch.program_type || '').toString();
+                const programLabel = (batch.donor_program_label || storedProgram || 'Unknown').toString();
+                const stage = (batch.lab_stage || batch.state || batch.status || 'Pasteurization').toString();
+                const batchName = (batch.full_name || batch.batch_name || batch.donor_name || '').toString();
                 const infantName = (batch.infant_name || '').toString();
                 const diagnosis = (batch.medical_diagnosis || '').toString();
-                const idValue = window.LacteeBatchUtils.getBatchIdentifier(batch).toString();
+                const identifier = window.LacteeBatchUtils.getBatchIdentifier(batch).toString();
+                const docId = (batch.id || '').toString();
 
-                const matchesSearch = !searchValue || [parentName, infantName, diagnosis, programLabel, stage, idValue]
+                const matchesSearch = !searchValue || [batchName, infantName, diagnosis, programLabel, stage, identifier, docId]
                     .some(field => field.toLowerCase().includes(searchValue));
-                const matchesProgram = !selectedProgram || programLabel === selectedProgram;
+                const matchesProgram = !selectedProgram || storedProgram === selectedProgram;
                 const matchesStage = !selectedStage || stage === selectedStage;
 
                 return matchesSearch && matchesProgram && matchesStage;
@@ -266,38 +233,34 @@ if(logoutBtn) {
             document.getElementById('search-input').addEventListener('input', filterBatches);
             document.getElementById('program-filter').addEventListener('change', filterBatches);
             document.getElementById('stage-filter').addEventListener('change', filterBatches);
-            document.getElementById('clear-filters').addEventListener('click', () => {
-                document.getElementById('search-input').value = '';
-                document.getElementById('program-filter').value = '';
-                document.getElementById('stage-filter').value = '';
-                renderBatchTable(pendingBatchesCache);
-            });
         }
 
         window.updateLab = async function(docId) {
             const selectedStage = document.getElementById(`stage_${docId}`).value;
             const result = document.getElementById(`status_${docId}`).value;
-            
-                if(result === 'Ongoing') {
-                    return alert("Please choose 'Passed' or 'Failed' before saving.");
-                }
 
-                try {
-                    const newState = result === 'Passed' ? 'Passed' : 'Failed';
-                    const displayStatus = result === 'Passed' ? 'Passed' : 'Failed';
+            if (result === 'Ongoing') {
+                return alert("Please choose 'Passed' or 'Failed' before saving.");
+            }
 
-                    // 1. Update the Milk Batch document
-                    await updateDoc(doc(db, "Milk_Batches", docId), {
-                        lab_result: result,
-                        state: newState,
-                        status: displayStatus,
-                        lab_stage: selectedStage
-                    });
+            try {
+                await ensureAnonymousAuth();
+
+                const newState = result === 'Passed' ? 'Passed' : 'Failed';
+                const displayStatus = result === 'Passed' ? 'Passed' : 'Failed';
+
+                // 1. Update the Milk Batch document
+                await updateDoc(doc(db, "Milk_Batches", docId), {
+                    lab_result: result,
+                    state: newState,
+                    status: displayStatus,
+                    lab_stage: selectedStage
+                });
 
                 // 2. Add log to Laboratory_Verifications
                 await addDoc(collection(db, "Laboratory_Verifications"), {
                     batch_id: docId,
-                    staff_id: window.currentUserEmail || 'Unknown',
+                    staff_id: getStaffDisplayId(),
                     test_result: result,
                     test_type: 'Pasteurization',
                     tested_at: serverTimestamp()
@@ -308,22 +271,20 @@ if(logoutBtn) {
                     batch_id: docId,
                     previous_state: 'Pasteurization',
                     new_state: newState,
-                    staff_id: window.currentUserEmail || 'Unknown',
+                    staff_id: getStaffDisplayId(),
                     timestamp: serverTimestamp()
                 });
 
-                // Remove row from UI
-                document.getElementById(`row-${docId}`).remove();
+                document.getElementById(`row-${docId}`)?.remove();
                 alert(`Batch ${docId} successfully marked as ${result}.`);
-
             } catch (error) {
                 console.error("Error updating lab result:", error);
-                alert("An error occurred while saving the verification.");
+                alert("An error occurred while saving the verification. Check console for details.");
             }
         }
 
         // Initialize table
-        loadPendingBatches().then(setupFilterListeners);
+        initLaboratoryPage();
     </script>
 </body>
 </html>

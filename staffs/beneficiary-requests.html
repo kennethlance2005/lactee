@@ -124,8 +124,8 @@
     </style>
 
     <script type="module">
-        import { db, auth } from '../assets/js/firebase-config.js';
-        import { signInAnonymously } from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js';
+        import { db } from '../assets/js/firebase-config.js';
+        import { ensureAnonymousAuth, updateStaffNameDisplay, bindStaffLogout } from '../assets/js/staff-utils.js';
         import { collection, query, orderBy, onSnapshot, doc, updateDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js';
 
         const tableBody = document.getElementById('requests-tbody');
@@ -264,16 +264,15 @@
             }
         };
 
-        // Ensure we have an auth context (anonymous) before starting listener
         document.addEventListener('DOMContentLoaded', async () => {
             try {
-                if (!auth.currentUser) {
-                    await signInAnonymously(auth);
-                }
+                await ensureAnonymousAuth();
             } catch (e) {
-                console.warn('Anonymous sign-in failed for staff page (may still work if rules allow unauthenticated reads):', e);
+                console.warn('Anonymous sign-in failed for staff page:', e);
             }
 
+            updateStaffNameDisplay();
+            bindStaffLogout();
             loadRequests();
         });
 

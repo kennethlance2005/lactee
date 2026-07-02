@@ -85,57 +85,29 @@
     </main>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { db } from '../assets/js/firebase-config.js';
+        import { ensureAnonymousAuth, updateStaffNameDisplay, bindStaffLogout } from '../assets/js/staff-utils.js';
+        import { collection, getDocs, doc, updateDoc } from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js';
+        import '../assets/js/batch-utils.js';
 
-        // TODO: Replace with your actual Firebase config
-        const firebaseConfig = {
-  apiKey: "AIzaSyCgtXZAe_-Wj0D4Pd-t2BYAU3E2faUF86M",
-  authDomain: "hmbms-f70b5.firebaseapp.com",
-  projectId: "hmbms-f70b5",
-  storageBucket: "hmbms-f70b5.firebasestorage.app",
-  messagingSenderId: "276256441806",
-  appId: "1:276256441806:web:2e3db876c0dddbfb37979f",
-  measurementId: "G-XD87JGC0MZ"
-};
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        async function initDonorManagementPage() {
+            try {
+                await ensureAnonymousAuth();
+            } catch (error) {
+                console.error('Donor management auth failed:', error);
+            }
 
-const auth = getAuth(app);
+            updateStaffNameDisplay();
+            bindStaffLogout();
+            loadDonors();
+        }
 
-// Global variable to hold the user ID for your database inserts
-window.currentUserEmail = null; 
-
-onAuthStateChanged(auth, (user) => {
-    if (user) {
-        // User is signed in.
-        window.currentUserEmail = user.email;
-        
-        // Update the UI Sidebar dynamically
-        const nameDisplay = document.querySelector('.sidebar-footer strong');
-        if(nameDisplay) nameDisplay.textContent = user.email.split('@')[0]; // Quick formatting
-        
-    } else {
-        // User is NOT signed in. Kick them out!
-        window.location.href = "login.html";
-    }
-});
-
-// Attach a real logout function to your logout button
-const logoutBtn = document.querySelector('.logout-btn');
-if(logoutBtn) {
-    logoutBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        signOut(auth).then(() => {
-            window.location.href = "login.html";
-        });
-    });
-}
+        document.addEventListener('DOMContentLoaded', initDonorManagementPage);
 
         async function loadDonors() {
-            await auth.authStateReady();
-            if (!auth.currentUser) {
+            try {
+                await ensureAnonymousAuth();
+            } catch (error) {
                 window.location.href = 'login.html';
                 return;
             }
