@@ -37,7 +37,6 @@
             </ul>
         </nav>
         <div class="sidebar-footer">
-            <p>Logged in as: <strong>Nurse Clara</strong></p>
             <a href="login.html" class="logout-btn">Secure Logout</a>
         </div>
     </aside>
@@ -49,7 +48,14 @@
         </header>
 
         <section class="activity-section" style="margin-top: 1rem;">
-            <h2>Pending Screenings</h2>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h2 style="margin: 0;">Pending Screenings</h2>
+                <!-- Search Bar for Pending Screenings -->
+                <div style="display: flex; gap: 0.5rem;">
+                    <input type="text" id="search-pending" onkeyup="searchTable('search-pending', 'pending-tbody')" placeholder="Search pending applications..." style="padding: 0.5rem; border: 1px solid #CBD5E1; border-radius: 6px; width: 250px; font-size: 0.9rem;">
+                    <button class="btn-primary" onclick="searchTable('search-pending', 'pending-tbody')" style="padding: 0.5rem 1rem;">Search</button>
+                </div>
+            </div>
             <table class="data-table" id="pending-table">
                 <thead>
                     <tr>
@@ -60,14 +66,21 @@
                         <th>Action</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="pending-tbody">
                     <tr><td colspan="5" style="text-align: center;">Loading...</td></tr>
                 </tbody>
             </table>
         </section>
 
         <section class="activity-section" style="margin-top: 2rem;">
-            <h2>Active / Cleared Donors</h2>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h2 style="margin: 0;">Active / Cleared Donors</h2>
+                <!-- Search Bar for Active Donors -->
+                <div style="display: flex; gap: 0.5rem;">
+                    <input type="text" id="search-active" onkeyup="searchTable('search-active', 'active-tbody')" placeholder="Search active donors, DTN..." style="padding: 0.5rem; border: 1px solid #CBD5E1; border-radius: 6px; width: 250px; font-size: 0.9rem;">
+                    <button class="btn-primary" onclick="searchTable('search-active', 'active-tbody')" style="padding: 0.5rem 1rem;">Search</button>
+                </div>
+            </div>
             <table class="data-table" id="active-table">
                 <thead>
                     <tr>
@@ -75,10 +88,11 @@
                         <th>Name</th>
                         <th>Program</th>
                         <th>Status</th>
+                        <th>Action</th>
                     </tr>
                 </thead>
-                <tbody>
-                    <tr><td colspan="4" style="text-align: center;">Loading...</td></tr>
+                <tbody id="active-tbody">
+                    <tr><td colspan="5" style="text-align: center;">Loading...</td></tr>
                 </tbody>
             </table>
         </section>
@@ -87,15 +101,11 @@
     <script type="module">
         import { db } from '../assets/js/firebase-config.js';
         import { updateStaffNameDisplay, bindStaffLogout } from '../assets/js/staff-utils.js';
-        // Consolidated Firestore imports
-        import { collection, getDocs, doc, updateDoc, getDoc } from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js';
-        // Added Firebase Auth imports
-        import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js';
+        import { collection, getDocs, getDoc, doc, updateDoc, addDoc, deleteDoc, serverTimestamp, query, where, orderBy, limit } from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js';        import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js';
         import '../assets/js/batch-utils.js';
 
         const auth = getAuth();
 
-        // Standardized Authentication Check
         function ensureStaffAccess() {
             return new Promise((resolve) => {
                 const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -127,7 +137,7 @@
             const pendingTbody = document.querySelector('#pending-table tbody');
             const activeTbody = document.querySelector('#active-table tbody');
             
-            if (!pendingTbody || !activeTbody) return; // Safety check for DOM elements
+            if (!pendingTbody || !activeTbody) return;
 
             pendingTbody.innerHTML = ''; 
             activeTbody.innerHTML = '';
@@ -143,23 +153,25 @@
                 
                 if(snap.empty) {
                     pendingTbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No data found.</td></tr>';
-                    activeTbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">No data found.</td></tr>';
+                    activeTbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No data found.</td></tr>';
                     return;
                 }
 
                 snap.forEach(docSnap => {
                     const data = docSnap.data();
-                    
                     const applicantName = data.full_name || `${data.first_name || ''} ${data.last_name || ''}`.trim() || 'N/A';
                     const programLabel = data.program_category_label || programLabelMap[data.program_category] || data.program_category;
 
                     if (data.screening_status === 'Passed') {
                         activeTbody.innerHTML += `
-                            <tr>
+                            <tr id="donor-${docSnap.id}">
                                 <td><strong>${data.dtn || 'N/A'}</strong></td>
                                 <td>${applicantName}</td>
                                 <td>${programLabel}</td>
                                 <td><span class="badge badge-passed">Cleared</span></td>
+                                <td>
+                                    <button class="btn-sm btn-outline" style="color: #DC2626; border-color: #FCA5A5; padding: 5px 10px;" onclick="deleteDonor('${docSnap.id}')">Delete</button>
+                                </td>
                             </tr>
                         `;
                     } else {
@@ -171,6 +183,7 @@
                                 <td>${data.contact_number || 'N/A'}</td>
                                 <td>
                                     <button class="btn-primary" style="padding: 5px 10px;" onclick="clearDonor('${docSnap.id}')">Clear & Assign DTN</button>
+                                    <button class="btn-sm btn-outline" style="color: #DC2626; border-color: #FCA5A5; padding: 5px 10px; margin-left: 0.5rem;" onclick="deleteDonor('${docSnap.id}')">Delete</button>
                                 </td>
                             </tr>
                         `;
@@ -179,7 +192,7 @@
             } catch (error) {
                 console.error("Error loading donors:", error);
                 pendingTbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: red;">Error loading data from database.</td></tr>';
-                activeTbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: red;">Error loading data from database.</td></tr>';
+                activeTbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: red;">Error loading data from database.</td></tr>';
             }
         }
 
@@ -190,7 +203,6 @@
                 const isAuthorized = await ensureStaffAccess();
                 if (!isAuthorized) return;
 
-                // Grab donor details we need for the SMS before/while updating
                 const donorSnap = await getDoc(doc(db, "Donor_Profiles", docId));
                 const donorData = donorSnap.exists() ? donorSnap.data() : {};
 
@@ -201,7 +213,6 @@
                     dtn: newDtn
                 });
 
-                // Fire the SMS notification — send directly to Textbee API
                 let smsMessage = '';
                 try {
                     console.log('Sending SMS directly to Textbee API...');
@@ -212,10 +223,7 @@
                         ? `+${phoneDigits}`
                         : `+${phoneDigits}`;
                     
-                    const smsMessage_text = `Hi ${donorData.first_name || 'valued donor'}! Great news! Your HMBMS donor application has been approved (DTN: ${newDtn}). We will send you an update soon if your milk passed the Lab test!
-                    `;
-                    
-                    console.log(`To: ${normalizedPhone}, Message: ${smsMessage_text}`);
+                    const smsMessage_text = `Hi ${donorData.first_name || 'valued donor'}! Great news! Your HMBMS donor application has been approved (DTN: ${newDtn}). We will send you an update soon if your milk passed the Lab test!\n`;
                     
                     const textbeeResponse = await fetch('https://api.textbee.dev/api/v1/gateway/devices/6a41e63277015dcde1c56458/send-sms', {
                         method: 'POST',
@@ -230,11 +238,9 @@
                     });
                     
                     const smsResult = await textbeeResponse.json();
-                    console.log('Textbee Response:', smsResult);
                     
                     if (textbeeResponse.ok) {
                         smsMessage = '\n✓ SMS approval notification sent!';
-                        console.log('SMS sent successfully');
                     } else {
                         smsMessage = `\n⚠️ SMS failed: ${smsResult.message || 'Unknown error'}`;
                         console.warn('SMS notification failed:', smsResult);
@@ -245,15 +251,61 @@
                 }
 
                 alert(`Donor Cleared! Assigned DTN: ${newDtn}${smsMessage}`);
-                loadDonors(); // Reload the tables visually
+                loadDonors();
             } catch (error) {
                 console.error("Error updating donor:", error);
                 alert("Failed to update donor status.");
             }
         };
 
-        // Only trigger on load, removed the duplicate call
+        // --- NEW: Delete Donor Function ---
+        window.deleteDonor = async function(docId) {
+            if (!confirm("Are you sure you want to permanently delete this donor profile? This action cannot be undone.")) return;
+            
+            try {
+                const isAuthorized = await ensureStaffAccess();
+                if (!isAuthorized) return;
+
+                await deleteDoc(doc(db, 'Donor_Profiles', docId));
+                
+                // Remove the row from the UI locally without requiring a full reload
+                const row = document.getElementById(`donor-${docId}`);
+                if (row) row.remove();
+                
+                alert("Donor profile successfully deleted.");
+            } catch (error) {
+                console.error("Error deleting donor:", error);
+                alert("Failed to delete donor. Check console for details.");
+            }
+        };
+
         document.addEventListener('DOMContentLoaded', initDonorManagementPage);
+
+        // --- Search Table Function ---
+        window.searchTable = function(inputId, tbodyId) {
+            const input = document.getElementById(inputId);
+            const filter = input.value.toLowerCase();
+            const tbody = document.getElementById(tbodyId);
+            
+            if (!tbody) return;
+            
+            const rows = tbody.getElementsByTagName('tr');
+
+            for (let i = 0; i < rows.length; i++) {
+                // Skip "Loading..." or empty state rows (rows with 1 cell spanning multiple columns)
+                if (rows[i].cells.length <= 1) continue; 
+                
+                // Combine all text in the row (App ID, DTN, Name, Program, etc.)
+                const rowText = rows[i].textContent || rows[i].innerText;
+                
+                // Show row if text matches the filter, otherwise hide it
+                if (rowText.toLowerCase().indexOf(filter) > -1) {
+                    rows[i].style.display = '';
+                } else {
+                    rows[i].style.display = 'none';
+                }
+            }
+        };
     </script>
 </body>
 </html>

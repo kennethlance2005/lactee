@@ -105,7 +105,6 @@
             </ul>
         </nav>
         <div class="sidebar-footer">
-            <p>Logged in as: <strong id="current-user">Staff</strong></p>
             <a href="login.html" class="logout-btn">Secure Logout</a>
         </div>
     </aside>
@@ -160,7 +159,14 @@
         </section>
 
         <section class="card">
-            <h2 style="margin-bottom: 1rem;">Recent Batches</h2>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h2 style="margin: 0;">Recent Batches</h2>
+                <!-- Search Bar for Recent Batches -->
+                <div style="display: flex; gap: 0.5rem;">
+                    <input type="text" id="search-batches" onkeyup="searchTable('search-batches', 'batch-list-body')" placeholder="Search batch, name, DTN..." style="padding: 0.5rem; border: 1px solid #CBD5E1; border-radius: 6px; width: 250px; font-size: 0.9rem;">
+                    <button class="btn-primary" onclick="searchTable('search-batches', 'batch-list-body')" style="padding: 0.5rem 1rem;">Search</button>
+                </div>
+            </div>
             <table class="data-table">
                 <thead>
                     <tr>
@@ -451,6 +457,29 @@
                 batchMessage.style.color = '#DC2626';
             }
         });
+
+        // --- Search Table Function ---
+        window.searchTable = function(inputId, tbodyId) {
+            const input = document.getElementById(inputId);
+            const filter = input.value.toLowerCase();
+            const tbody = document.getElementById(tbodyId);
+            const rows = tbody.getElementsByTagName('tr');
+
+            for (let i = 0; i < rows.length; i++) {
+                // Skip "Loading batches..." or empty state rows
+                if (rows[i].cells.length <= 1) continue; 
+                
+                // Combine all text in the row (Batch ID, Name, DTN, Status, etc.)
+                const rowText = rows[i].textContent || rows[i].innerText;
+                
+                // Show row if text matches the filter, otherwise hide it
+                if (rowText.toLowerCase().indexOf(filter) > -1) {
+                    rows[i].style.display = '';
+                } else {
+                    rows[i].style.display = 'none';
+                }
+            }
+        };
     </script>
 </body>
 </html>

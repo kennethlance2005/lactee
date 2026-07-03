@@ -8,7 +8,6 @@
     <link rel="stylesheet" href="../assets/css/styles.css">
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <style>
-        /* (Use the same standard CSS block as above) */
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
         body { background-color: #F8FAFC; color: #334155; line-height: 1.6; display: flex; min-height: 100vh; }
         .sidebar { width: 250px; background-color: #1E293B; color: white; display: flex; flex-direction: column; position: fixed; height: 100vh; }
@@ -22,6 +21,7 @@
         .dashboard-header h1 { color: #0F172A; }
         
         .btn-primary { padding: 0.5rem 1rem; border-radius: 4px; border: none; background-color: #10B981; color: white; font-weight: bold; cursor: pointer; }
+        .btn-sm { padding: 0.4rem 0.8rem; border-radius: 4px; border: none; cursor: pointer; font-size: 0.85rem; font-weight: 600; text-decoration: none; display: inline-block; background-color: transparent; }
         
         /* Stats Dashboard */
         .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-bottom: 2.5rem; }
@@ -29,20 +29,24 @@
         .stat-card h3 { font-size: 0.9rem; color: #64748B; text-transform: uppercase; margin-bottom: 0.5rem; }
         .stat-card .value { font-size: 2rem; font-weight: 700; color: #0F172A; }
 
-        /* Data Table */
+        /* Data Tables */
         .data-table { table-layout: fixed; width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         .data-table th, .data-table td { padding: 1rem; vertical-align: middle; border-bottom: 1px solid #E2E8F0; }
         .data-table th { background-color: #F1F5F9; font-weight: 600; color: #475569; }
-        .data-table th:nth-child(1), .data-table td:nth-child(1) { width: 30%; }
-        .data-table th:nth-child(2), .data-table td:nth-child(2) { width: 20%; }
-        .data-table th:nth-child(3), .data-table td:nth-child(3) { width: 15%; }
-        .data-table th:nth-child(4), .data-table td:nth-child(4) { width: 15%; }
-        .data-table th:nth-child(5), .data-table td:nth-child(5) { width: 10%; }
-        .data-table th:nth-child(6), .data-table td:nth-child(6) { width: 10%; }
         .data-table td { text-align: left; }
-        .data-table td:nth-child(6) { text-align: center; }
         .data-table td:first-child { font-weight: 700; color: #0F172A; }
+        
+        /* Active Inventory Specific Widths */
+        #inventory-table th:nth-child(1), #inventory-table td:nth-child(1) { width: 25%; } 
+        #inventory-table th:nth-child(2), #inventory-table td:nth-child(2) { width: 15%; } 
+        #inventory-table th:nth-child(3), #inventory-table td:nth-child(3) { width: 12%; } 
+        #inventory-table th:nth-child(4), #inventory-table td:nth-child(4) { width: 10%; } 
+        #inventory-table th:nth-child(5), #inventory-table td:nth-child(5) { width: 13%; } 
+        #inventory-table th:nth-child(6), #inventory-table td:nth-child(6) { width: 10%; } 
+        #inventory-table th:nth-child(7), #inventory-table td:nth-child(7) { width: 15%; text-align: center; white-space: nowrap; } 
+
         .status-badge { background: #D1FAE5; color: #065F46; padding: 0.25rem 0.75rem; border-radius: 999px; font-size: 0.85rem; font-weight: bold; }
+        .badge-dispensed { background: #E2E8F0; color: #475569; }
         .btn-primary { padding: 0.5rem 1rem; border-radius: 6px; }
     </style>
 
@@ -59,7 +63,7 @@
             #reader { height: 220px !important; }
         }
 
-        /* --- HIGHLIGHT ANIMATION FOR SCANNER --- */
+        /* HIGHLIGHT ANIMATION FOR SCANNER */
         @keyframes highlightPulse {
             0% { background-color: #FEF08A; } 
             50% { background-color: #FDE047; }
@@ -71,6 +75,7 @@
             border-left: 4px solid #EAB308 !important;
             transition: background-color 0.3s;
         }
+        .btn-outline:hover { background-color: #FEE2E2; }
     </style>
 </head>
 <body class="dashboard-body">
@@ -89,7 +94,6 @@
             </ul>
         </nav>
         <div class="sidebar-footer">
-            <p>Logged in as: <strong id="current-user">Staff</strong></p>
             <a href="login.html" class="logout-btn">Secure Logout</a>
         </div>
     </aside>
@@ -118,7 +122,6 @@
         <section class="card" style="border-top-color: #38BDF8;">
             <h2 style="margin-bottom: 1rem;">Barcode Scanner</h2>
             
-            <!-- NEW: Status text and Reset button layout -->
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                 <p id="scanner-status" style="margin: 0; color: #2563EB; font-weight: 500;">Point the camera at a batch barcode to scan.</p>
                 <button class="btn-primary" onclick="resetScanner()" style="background-color: #3B82F6; padding: 0.4rem 0.8rem; font-size: 0.85rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">🔄 Scan Another</button>
@@ -132,20 +135,54 @@
             </div>
         </section>
 
-        <section>
-            <table class="data-table">
+        <section style="margin-top: 2rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h2 style="margin: 0; color: #0F172A;">Available Inventory</h2>
+                <!-- Search Bar for Available Inventory -->
+                <div style="display: flex; gap: 0.5rem;">
+                    <input type="text" id="search-inventory" onkeyup="searchTable('search-inventory', 'inventory-body')" placeholder="Search batch, name, volume..." style="padding: 0.5rem; border: 1px solid #CBD5E1; border-radius: 6px; width: 250px; font-size: 0.9rem;">
+                    <button class="btn-primary" onclick="searchTable('search-inventory', 'inventory-body')" style="padding: 0.5rem 1rem;">Search</button>
+                </div>
+            </div>
+            <table class="data-table" id="inventory-table">
                 <thead>
                     <tr>
                         <th>Batch / Barcode</th>
                         <th>Full Name</th>
                         <th>Donor DTN</th>
                         <th>Volume</th>
+                        <th>Date Stored</th>
                         <th>Status</th>
                         <th>Action</th>
                     </tr>
                 </thead>
                 <tbody id="inventory-body">
-                    <tr><td colspan="6" style="text-align: center;">Loading inventory...</td></tr>
+                    <tr><td colspan="7" style="text-align: center;">Loading inventory...</td></tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- UPDATED: Dispensed Milk Records Section -->
+        <section style="margin-top: 3rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h2 style="margin: 0; color: #0F172A;">Dispensed Milk Records</h2>
+                <!-- Search Bar for Dispensed Records -->
+                <div style="display: flex; gap: 0.5rem;">
+                    <input type="text" id="search-dispensed" onkeyup="searchTable('search-dispensed', 'dispensed-body')" placeholder="Search batch, beneficiary..." style="padding: 0.5rem; border: 1px solid #CBD5E1; border-radius: 6px; width: 250px; font-size: 0.9rem;">
+                    <button class="btn-primary" onclick="searchTable('search-dispensed', 'dispensed-body')" style="padding: 0.5rem 1rem;">Search</button>
+                </div>
+            </div>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Batch / Barcode</th>
+                        <th>Beneficiary Name</th>
+                        <th>Volume</th>
+                        <th>Date Dispensed</th>
+                    </tr>
+                </thead>
+                <tbody id="dispensed-body">
+                    <tr><td colspan="4" style="text-align: center;">Loading records...</td></tr>
                 </tbody>
             </table>
         </section>
@@ -178,12 +215,13 @@
 <script type="module">
     import { db } from '../assets/js/firebase-config.js';
     import { updateStaffNameDisplay, bindStaffLogout, getStaffDisplayId } from '../assets/js/staff-utils.js';
-    import { collection, getDocs, updateDoc, doc, addDoc, serverTimestamp, query, where } from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js';
+    import { collection, getDocs, doc, updateDoc, addDoc, deleteDoc, serverTimestamp, query, where, orderBy, limit } from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js';
     import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js';
     import '../assets/js/batch-utils.js';
 
     const auth = getAuth();
 
+    // 1. Standardized Authentication Check
     function ensureStaffAccess() {
         return new Promise((resolve) => {
             const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -208,7 +246,8 @@
         loadInventory();
     }
 
-    async function loadInventory() {
+    // 2. Load Inventory (Available & Dispensed)
+    window.loadInventory = async function() {
         const isAuthorized = await ensureStaffAccess();
         if (!isAuthorized) return;
 
@@ -216,8 +255,11 @@
             const snap = await getDocs(collection(db, 'Safe_Inventory'));
             const batches = snap.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
             
+            // Separate available and dispensed batches
             const availableBatches = batches.filter(batch => batch.status !== 'Dispensed');
+            const dispensedBatches = batches.filter(batch => batch.status === 'Dispensed');
 
+            // Process Stats
             const totalVolume = availableBatches.reduce((sum, batch) => sum + (Number(batch.volume_ml) || 0), 0);
             const expiringSoon = 0; 
 
@@ -225,35 +267,78 @@
             document.getElementById('safe-batches').textContent = availableBatches.length;
             document.getElementById('safe-expiring').textContent = expiringSoon;
 
+            // Render Available Inventory Table
             const tbody = document.getElementById('inventory-body');
             if (!availableBatches.length) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">No safe inventory found yet.</td></tr>';
-                return;
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No safe inventory found yet.</td></tr>';
+            } else {
+                tbody.innerHTML = availableBatches.map(batch => {
+                    let dateString = 'N/A';
+                    if (batch.stored_at) {
+                        dateString = batch.stored_at.toDate().toLocaleDateString();
+                    } else if (batch.created_at) {
+                        dateString = batch.created_at.toDate().toLocaleDateString();
+                    }
+
+                    return `
+                        <tr id="inv-${batch.id}" data-barcode="${batch.batch_id}">
+                            <td><strong>${batch.batch_id}</strong></td>
+                            <td>${batch.full_name || 'N/A'}</td>
+                            <td>${batch.donor_dtn || 'N/A'}</td>
+                            <td>${batch.volume_ml || 0} mL</td>
+                            <td>${dateString}</td>
+                            <td><span class="status-badge" id="status-${batch.id}">${batch.status || 'Available'}</span></td>
+                            <td style="white-space: nowrap;">
+                                <button class="btn-primary" style="padding: 0.3rem 0.5rem; font-size: 0.8rem;" onclick="dispenseBatch('${batch.id}', '${batch.batch_id}')">Dispense</button>
+                                <button class="btn-sm btn-outline" style="color: #DC2626; border: 1px solid #FCA5A5; margin-left: 0.2rem; padding: 0.3rem 0.5rem; font-size: 0.8rem;" onclick="deleteInventoryItem('${batch.id}', '${batch.batch_id}')">Discard</button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
             }
-            
-            tbody.innerHTML = availableBatches.map(batch => {
-                // NEW: Added data-barcode attribute so the scanner can find this specific row
-                return `
-                    <tr id="inv-${batch.id}" data-barcode="${batch.batch_id}">
-                        <td><strong>${batch.batch_id}</strong></td>
-                        <td>${batch.full_name || 'N/A'}</td>
-                        <td>${batch.donor_dtn || 'N/A'}</td>
-                        <td>${batch.volume_ml || 0} mL</td>
-                        <td><span class="status-badge" id="status-${batch.id}">${batch.status || 'Available'}</span></td>
-                        <td><button class="btn-primary" onclick="dispenseBatch('${batch.id}')">Dispense</button></td>
-                    </tr>
-                `;
-            }).join('');
+
+            // Render Dispensed Milk Records Table (Updated logic without Dispensed By column)
+            const dispensedTbody = document.getElementById('dispensed-body');
+            if (!dispensedBatches.length) {
+                dispensedTbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">No dispensed milk records found.</td></tr>';
+            } else {
+                // Sort by most recently dispensed
+                dispensedBatches.sort((a, b) => {
+                    const timeA = a.dispensed_at ? a.dispensed_at.toMillis() : 0;
+                    const timeB = b.dispensed_at ? b.dispensed_at.toMillis() : 0;
+                    return timeB - timeA;
+                });
+
+                dispensedTbody.innerHTML = dispensedBatches.map(batch => {
+                    let dispDate = 'N/A';
+                    if (batch.dispensed_at) {
+                        dispDate = batch.dispensed_at.toDate().toLocaleDateString();
+                    }
+                    
+                    return `
+                        <tr>
+                            <td><strong>${batch.batch_id}</strong></td>
+                            <td>${batch.dispensed_to_name || 'N/A'}</td>
+                            <td>${batch.volume_ml || 0} mL</td>
+                            <td>${dispDate}</td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+
         } catch (error) {
             console.error("Error loading inventory:", error);
-            document.getElementById('inventory-body').innerHTML = '<tr><td colspan="6" style="text-align: center; color: red;">Error loading inventory data.</td></tr>';
+            document.getElementById('inventory-body').innerHTML = '<tr><td colspan="7" style="text-align: center; color: red;">Error loading inventory data.</td></tr>';
         }
     }
 
     let currentDispenseBatchId = null;
+    let currentDispenseBarcodeId = null;
 
-    window.dispenseBatch = async function(batchDocId) {
+    // 3. Open Beneficiary Selection Modal
+    window.dispenseBatch = async function(batchDocId, barcodeId) {
         currentDispenseBatchId = batchDocId;
+        currentDispenseBarcodeId = barcodeId;
         const modal = document.getElementById('dispenseModal');
         const tbody = document.getElementById('approved-requests-body');
         
@@ -277,11 +362,9 @@
                 const mFirst = formDetails.mother_first_name || '';
                 const mLast = formDetails.mother_last_name || '';
                 const parentName = (mFirst || mLast) ? `${mFirst} ${mLast}`.trim() : (formDetails.mother_name || req.mother_name || 'N/A');
-
                 const iFirst = formDetails.infant_first_name || '';
                 const iLast = formDetails.infant_last_name || '';
                 const infantName = (iFirst || iLast) ? `${iFirst} ${iLast}`.trim() : (formDetails.infant_name || req.infant_name || 'N/A');
-                
                 const vol = formDetails.requested_volume || req.requested_volume || 0;
 
                 return `
@@ -304,121 +387,149 @@
     window.closeDispenseModal = function() {
         document.getElementById('dispenseModal').style.display = 'none';
         currentDispenseBatchId = null;
+        currentDispenseBarcodeId = null;
     };
 
+    // 4. Process Dispensing & Log Records (with Safe Background Fallbacks)
     window.processDispense = async function(requestId, beneficiaryName) {
         const batchDocId = currentDispenseBatchId;
-        if (!batchDocId) return;
+        const barcodeId = currentDispenseBarcodeId;
+        if (!batchDocId || !barcodeId) return;
 
-        const v = prompt('Verifier: enter your staff identifier (name or email)');
-        if (!v) return alert('Dispense cancelled: verifier required.');
-
-        const confirmDispense = confirm(`Confirm dispensing batch ${batchDocId} to ${beneficiaryName}?`);
+        const confirmDispense = confirm(`Confirm dispensing batch ${barcodeId} to ${beneficiaryName}?`);
         if (!confirmDispense) return;
 
         try {
             const isAuthorized = await ensureStaffAccess();
             if (!isAuthorized) return;
 
+            const staffUser = auth.currentUser;
+            const activeStaffId = staffUser ? (staffUser.displayName || staffUser.email || 'Unknown Staff') : 'System';
+
+            // PRIMARY ACTION: Update Safe_Inventory
             await updateDoc(doc(db, 'Safe_Inventory', batchDocId), {
                 status: 'Dispensed',
                 dispensed_to_request_id: requestId,
                 dispensed_to_name: beneficiaryName,
                 dispensed_at: serverTimestamp(),
-                dispensed_by: v.trim()
+                dispensed_by: activeStaffId
             });
 
-            await updateDoc(doc(db, 'Milk_Batches', batchDocId), {
-                status: 'Dispensed',
-                state: 'Dispensed'
-            });
-
-            await addDoc(collection(db, 'Milk_Dispense_Logs'), {
-                batch_id: batchDocId,
-                request_id: requestId,
-                beneficiary_name: beneficiaryName,
-                verifier: v.trim(),
-                acted_by: getStaffDisplayId(),
-                timestamp: serverTimestamp()
-            });
-
-            await addDoc(collection(db, 'Milk_State_Logs'), {
-                batch_id: batchDocId,
-                previous_state: 'Storage',
-                new_state: 'Dispensed',
-                staff_id: getStaffDisplayId(),
-                timestamp: serverTimestamp()
-            });
-
-            const statusEl = document.getElementById(`status-${batchDocId}`);
-            if (statusEl) {
-                statusEl.textContent = 'Dispensed';
-                statusEl.style.backgroundColor = '#E2E8F0';
-                statusEl.style.color = '#475569';
-            }
-            
-            const row = document.getElementById(`inv-${batchDocId}`);
-            if (row) {
-                row.classList.remove('highlighted-row'); // Remove highlight if it was scanned
-                const btn = row.querySelector('button');
-                if (btn) {
-                    btn.disabled = true;
-                    btn.style.backgroundColor = '#94A3B8';
-                    btn.style.cursor = 'not-allowed';
-                    btn.textContent = 'Dispensed';
+            // SECONDARY ACTIONS: Update Logs and Original Batches safely
+            try {
+                const batchQuery = query(collection(db, 'Milk_Batches'), where('batch_id', '==', barcodeId));
+                const batchSnap = await getDocs(batchQuery);
+                if (!batchSnap.empty) {
+                    await updateDoc(doc(db, 'Milk_Batches', batchSnap.docs[0].id), {
+                        status: 'Dispensed',
+                        state: 'Dispensed'
+                    });
                 }
-            }
+            } catch (e) { console.warn("Background task (Milk_Batches update) failed, but dispense succeeded.", e); }
+
+            try {
+                await addDoc(collection(db, 'Milk_Dispense_Logs'), {
+                    batch_id: barcodeId,
+                    request_id: requestId,
+                    beneficiary_name: beneficiaryName,
+                    verifier: activeStaffId,
+                    acted_by: activeStaffId,
+                    timestamp: serverTimestamp()
+                });
+                await addDoc(collection(db, 'Milk_State_Logs'), {
+                    batch_id: barcodeId,
+                    previous_state: 'Storage',
+                    new_state: 'Dispensed',
+                    staff_id: activeStaffId,
+                    timestamp: serverTimestamp()
+                });
+            } catch (e) { console.warn("Background task (Audit Logs) failed, but dispense succeeded.", e); }
 
             closeDispenseModal();
             alert(`Success! Batch successfully dispensed to ${beneficiaryName}.`);
+            window.loadInventory();
+
         } catch (err) {
-            console.error('Dispense failed:', err);
-            alert('Dispense failed. Check console for details.');
+            console.error('CRITICAL ERROR: Dispense completely failed:', err);
+            alert('Critical Error: Failed to update the inventory database. Check console for details.');
         }
     };
 
-    // --- NEW: Interactive Barcode Scanner Logic ---
+    // 5. Discard Inventory Item (with Safe Background Fallbacks)
+    window.deleteInventoryItem = async function(batchDocId, barcodeId) {
+        if (!confirm(`Are you sure you want to permanently discard batch ${barcodeId}?`)) return;
+        
+        try {
+            const isAuthorized = await ensureStaffAccess();
+            if (!isAuthorized) return;
+
+            const staffUser = auth.currentUser;
+            const activeStaffId = staffUser ? (staffUser.displayName || staffUser.email || 'Unknown Staff') : 'System';
+
+            // PRIMARY ACTION: Remove from Safe_Inventory
+            await deleteDoc(doc(db, 'Safe_Inventory', batchDocId));
+            
+            // SECONDARY ACTIONS: Safely update state logs
+            try {
+                const batchQuery = query(collection(db, 'Milk_Batches'), where('batch_id', '==', barcodeId));
+                const batchSnap = await getDocs(batchQuery);
+                if (!batchSnap.empty) {
+                    await updateDoc(doc(db, 'Milk_Batches', batchSnap.docs[0].id), {
+                        status: 'Discarded',
+                        state: 'Discarded'
+                    });
+                }
+                await addDoc(collection(db, 'Milk_State_Logs'), {
+                    batch_id: barcodeId, 
+                    previous_state: 'Storage',
+                    new_state: 'Discarded',
+                    staff_id: activeStaffId,
+                    timestamp: serverTimestamp()
+                });
+            } catch (e) { console.warn("Background task failed, but discard succeeded.", e); }
+            
+            window.loadInventory(); 
+            alert("Batch successfully removed from inventory and marked as discarded.");
+        } catch (error) {
+            console.error("Error discarding inventory item:", error);
+            alert("Failed to discard batch. Check console for details.");
+        }
+    };
+
+    // 6. Interactive Barcode Scanner Logic
     const scannerStatus = document.getElementById('scanner-status');
     const scannerOutput = document.getElementById('scanner_output');
 
     function onScanSuccess(decodedText) {
         scannerOutput.value = decodedText;
         
-        // Remove highlight from any previously scanned rows
         document.querySelectorAll('.highlighted-row').forEach(row => {
             row.classList.remove('highlighted-row');
         });
 
-        // Search the table for the scanned barcode
         const targetRow = document.querySelector(`tr[data-barcode="${decodedText}"]`);
 
         if (targetRow) {
-            // Success: Highlight the row and scroll it into the center of the screen
             targetRow.classList.add('highlighted-row');
             targetRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
             
             scannerStatus.textContent = `Batch found and highlighted: ${decodedText}`;
-            scannerStatus.style.color = '#10B981'; // Green
+            scannerStatus.style.color = '#10B981'; 
         } else {
-            // Error: Barcode not found in the current available inventory
             scannerStatus.textContent = `Batch ${decodedText} not found or already dispensed.`;
-            scannerStatus.style.color = '#DC2626'; // Red
+            scannerStatus.style.color = '#DC2626'; 
         }
     }
 
-    // --- NEW: Reset Scanner Function ---
     window.resetScanner = function() {
-        // 1. Clear the input box and reset the status text
         scannerOutput.value = '';
         scannerStatus.textContent = 'Point the camera or upload a file to scan.';
         scannerStatus.style.color = '#2563EB';
 
-        // 2. Remove the yellow highlight from the table
         document.querySelectorAll('.highlighted-row').forEach(row => {
             row.classList.remove('highlighted-row');
         });
 
-        // 3. Clear the scanner's internal memory and restart the UI
         scanner.clear().then(() => {
             scanner.render(onScanSuccess);
         }).catch(error => {
@@ -426,15 +537,37 @@
         });
     };
 
-    // --- UPDATED: Scanner configured for File Upload Only ---
+    // Scanner is constrained to File Upload Only
     const scanner = new Html5QrcodeScanner('reader', { 
         fps: 10, 
         qrbox: { width: 240, height: 120 },
-        // This line restricts the scanner to file-based scanning only
         supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_FILE] 
     }, false);
     
     scanner.render(onScanSuccess);
+
+    // 7. Search Table Function
+    window.searchTable = function(inputId, tbodyId) {
+        const input = document.getElementById(inputId);
+        const filter = input.value.toLowerCase();
+        const tbody = document.getElementById(tbodyId);
+        const rows = tbody.getElementsByTagName('tr');
+
+        for (let i = 0; i < rows.length; i++) {
+            // Skip rows that span multiple columns (e.g., "Loading records..." or "No inventory")
+            if (rows[i].cells.length <= 1) continue; 
+            
+            // Combine all text content in the row for checking
+            const rowText = rows[i].textContent || rows[i].innerText;
+            
+            // Toggle display based on whether the row text contains the search filter
+            if (rowText.toLowerCase().indexOf(filter) > -1) {
+                rows[i].style.display = '';
+            } else {
+                rows[i].style.display = 'none';
+            }
+        }
+    };
 
     document.addEventListener('DOMContentLoaded', initSafeInventoryPage);
 </script>

@@ -41,7 +41,6 @@
             </ul>
         </nav>
         <div class="sidebar-footer">
-            <p>Logged in as: <strong id="current-user">Nurse Clara</strong></p>
             <a href="login.html" class="logout-btn">Secure Logout</a>
         </div>
     </aside>
@@ -61,12 +60,12 @@
             <div class="stat-card success">
                 <h3>Ready to Dispense</h3>
                 <p class="stat-number" id="stat-ready-vol">Loading...</p>
-                <a href="inventory-scanner.html">Check active inventory &rarr;</a>
+                <a href="safe-inventory.html">Check active inventory &rarr;</a>
             </div>
             <div class="stat-card info">
                 <h3>Pending Inquiries</h3>
                 <p class="stat-number" id="stat-pending-inq">Loading...</p>
-                <a href="safe-dispensing.html">Match inventory &rarr;</a>
+                <a href="beneficiary-requests.html">Review milk requests &rarr;</a>
             </div>
         </section>
 
@@ -78,7 +77,6 @@
                         <th>Time</th>
                         <th>Batch / Barcode ID</th>
                         <th>Action Performed</th>
-                        <th>Staff ID</th>
                     </tr>
                 </thead>
                 <tbody id="activity-tbody">
@@ -90,16 +88,32 @@
 
     <script type="module">
         import { db } from "../assets/js/firebase-config.js";
-        import { ensureAnonymousAuth, updateStaffNameDisplay, bindStaffLogout } from "../assets/js/staff-utils.js";
+        import { updateStaffNameDisplay, bindStaffLogout } from "../assets/js/staff-utils.js";
         import { collection, query, where, getDocs, orderBy, limit } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js';
         import "../assets/js/batch-utils.js";
 
+        const auth = getAuth();
+
+        // 1. Standardized Authentication Check
+        function ensureStaffAccess() {
+            return new Promise((resolve) => {
+                const unsubscribe = onAuthStateChanged(auth, (user) => {
+                    unsubscribe(); 
+                    if (user) {
+                        resolve(true);
+                    } else {
+                        console.error('User is not logged in.');
+                        window.location.href = 'login.html'; 
+                        resolve(false);
+                    }
+                });
+            });
+        }
+
         async function initDashboardPage() {
-            try {
-                await ensureAnonymousAuth();
-            } catch (error) {
-                console.error('Dashboard auth failed:', error);
-            }
+            const isAuthorized = await ensureStaffAccess();
+            if (!isAuthorized) return;
 
             updateStaffNameDisplay();
             bindStaffLogout();
@@ -108,20 +122,31 @@
 
         async function loadDashboardStats() {
             try {
+                // 1. Pending Lab Tests (from Milk_Batches)
                 const allBatchesSnap = await getDocs(collection(db, 'Milk_Batches'));
                 const allBatches = allBatchesSnap.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
-
-                const pendingLabBatches = allBatches.filter(batch => window.LacteeBatchUtils.isPendingLabBatch(batch));
+                
+                // Fallback to manual check if LacteeBatchUtils isn't fully loaded
+                const pendingLabBatches = allBatches.filter(batch => {
+                    if (window.LacteeBatchUtils && window.LacteeBatchUtils.isPendingLabBatch) {
+                        return window.LacteeBatchUtils.isPendingLabBatch(batch);
+                    }
+                    return batch.status === 'Pending Lab Testing' || batch.status === 'Pending' || batch.lab_result === 'Waiting';
+                });
                 document.getElementById('stat-pending-labs').textContent = `${pendingLabBatches.length} Batches`;
 
-                const readyBatches = allBatches.filter(batch => window.LacteeBatchUtils.isReadyToDispenseBatch(batch));
-                const totalVolume = readyBatches.reduce((sum, batch) => sum + window.LacteeBatchUtils.getBatchVolume(batch), 0);
+                // 2. Ready to Dispense (UPDATED: Now pulls from Safe_Inventory)
+                const safeInvSnap = await getDocs(collection(db, 'Safe_Inventory'));
+                const availableBatches = safeInvSnap.docs.map(d => d.data()).filter(batch => batch.status !== 'Dispensed');
+                const totalVolume = availableBatches.reduce((sum, batch) => sum + (Number(batch.volume_ml) || 0), 0);
                 document.getElementById('stat-ready-vol').textContent = `${totalVolume} mL`;
 
+                // 3. Pending Inquiries
                 const qInquiries = query(collection(db, 'Milk_Inquiries'), where('status', '==', 'Pending'));
                 const inquiriesSnap = await getDocs(qInquiries);
                 document.getElementById('stat-pending-inq').textContent = `${inquiriesSnap.size} Requests`;
 
+                // 4. Recent Activity Log
                 const qLogs = query(collection(db, 'Milk_State_Logs'), orderBy('timestamp', 'desc'), limit(5));
                 const logsSnap = await getDocs(qLogs);
                 const tbody = document.getElementById('activity-tbody');
@@ -135,14 +160,19 @@
                 logsSnap.forEach(logDoc => {
                     const data = logDoc.data();
                     const time = data.timestamp ? data.timestamp.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A';
-                    const badgeClass = data.new_state === 'Passed Lab Test' ? 'badge-passed' : (data.new_state === 'Discarded' ? 'badge-discarded' : 'badge-pasteurized');
+                    
+                    // Assign colors based on the state update
+                    let badgeClass = 'badge-pending';
+                    if (data.new_state === 'Passed' || data.new_state === 'Storage') badgeClass = 'badge-passed';
+                    if (data.new_state === 'Failed' || data.new_state === 'Discarded') badgeClass = 'badge-discarded';
+                    if (data.new_state === 'Dispensed') badgeClass = 'badge-pasteurized';
 
                     tbody.innerHTML += `
                         <tr>
                             <td>${time}</td>
-                            <td>${data.barcode_id || data.batch_id || 'Unknown'}</td>
-                            <td>State updated: <span class="badge ${badgeClass}">${data.new_state || 'Received'}</span></td>
-                            <td>${data.staff_id || 'System'}</td>
+                            <td><strong>${data.barcode_id || data.batch_id || 'Unknown'}</strong></td>
+                            <td>State updated: <span class="badge ${badgeClass}">${data.new_state || 'Updated'}</span></td>
+                            
                         </tr>
                     `;
                 });
