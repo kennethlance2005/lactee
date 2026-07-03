@@ -212,7 +212,8 @@
                         ? `+${phoneDigits}`
                         : `+${phoneDigits}`;
                     
-                    const smsMessage_text = `Hi ${donorData.first_name || 'valued donor'}! Great news — your HMBMS donor application has been approved (DTN: ${newDtn}). Your contribution will help save lives!`;
+                    const smsMessage_text = `Hi ${donorData.first_name || 'valued donor'}! Great news! Your HMBMS donor application has been approved (DTN: ${newDtn}). We will send you an update soon if your milk passed the Lab test!
+                    `;
                     
                     console.log(`To: ${normalizedPhone}, Message: ${smsMessage_text}`);
                     

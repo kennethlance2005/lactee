@@ -236,6 +236,8 @@
         }
 
        window.updateLab = async function(docId) {
+            console.log('updateLab called with docId:', docId);
+            
             const selectedStage = document.getElementById(`stage_${docId}`).value;
             const result = document.getElementById(`status_${docId}`).value;
 
@@ -294,11 +296,101 @@
                     }
                 }
 
+                // 5. NEW: Send SMS notification to donor
+                const batchData = pendingBatchesCache.find(b => b.id === docId);
+                console.log('Batch data for SMS:', batchData);
+                console.log('Available fields in batch:', batchData ? Object.keys(batchData) : 'No batch data');
+                
+                let smsMessage = '';
+                if (batchData) {
+                    // Check all possible phone number fields
+                    const phoneNumber = batchData.contact_number || batchData.phone || batchData.contact || batchData.phone_number || batchData.donor_contact;
+                    console.log('Phone number found:', phoneNumber);
+                    console.log('contact_number field:', batchData.contact_number);
+                    console.log('phone field:', batchData.phone);
+                    console.log('donor fields:', { donor_name: batchData.donor_name, first_name: batchData.first_name });
+                    
+                    if (phoneNumber) {
+                        smsMessage = await sendLabTestSms(batchData, selectedStage, result);
+                    } else {
+                        smsMessage = '\n⚠️ No contact number found. Available fields: ' + Object.keys(batchData).filter(k => k.includes('contact') || k.includes('phone') || k.includes('number')).join(', ');
+                        console.warn('No contact number in batch. All batch keys:', Object.keys(batchData));
+                    }
+                } else {
+                    smsMessage = '\n⚠️ Batch data not found in cache';
+                    console.warn('Batch not found in pendingBatchesCache');
+                }
+
                 document.getElementById(`row-${docId}`)?.remove();
-                alert(`Batch ${docId} successfully marked as ${result} and updated.`);
+                alert(`Batch ${docId} successfully marked as ${result} and updated.${smsMessage}`);
             } catch (error) {
                 console.error("Error updating lab result:", error);
                 alert("An error occurred while saving the verification. Check console for details.");
+            }
+        }
+
+        // SMS notification for lab test results
+        async function sendLabTestSms(batchData, stage, result) {
+            try {
+                console.log(`Sending lab test SMS: ${result} for stage ${stage}`);
+                
+                // Try all possible phone number fields
+                const phoneNum = batchData.contact_number || batchData.phone || batchData.contact || batchData.phone_number;
+                
+                if (!phoneNum) {
+                    return '\n⚠️ No phone number found';
+                }
+                
+                const phoneDigits = phoneNum.toString().replace(/\D/g, '');
+                const normalizedPhone = phoneDigits.startsWith('0') 
+                    ? `+63${phoneDigits.slice(1)}` 
+                    : phoneDigits.startsWith('63')
+                    ? `+${phoneDigits}`
+                    : `+${phoneDigits}`;
+                
+                let smsText = '';
+                
+                if (result === 'Failed') {
+                    // Failed message for any stage
+                    smsText = `Hi ${batchData.full_name || batchData.donor_name || 'valued donor'}! Unfortunately, your milk did not pass the ${stage} lab test. Please contact us for further details.`;
+                } else if (result === 'Passed' && stage === 'Storage') {
+                    // Passed message for Storage stage only
+                    smsText = `Congratulations ${batchData.full_name || batchData.donor_name || 'valued donor'}! Your milk has passed the laboratory test and is now safely stored in our facility. Thank you for your contribution!`;
+                } else if (result === 'Passed') {
+                    // Passed for other stages
+                    smsText = `Hi ${batchData.full_name || batchData.donor_name || 'valued donor'}! Your milk has passed the ${stage} test. It will proceed to the next verification stage.`;
+                }
+                
+                if (!smsText) return ''; // No message for this combination
+                
+                console.log(`SMS to: ${normalizedPhone}`);
+                console.log(`Message: ${smsText}`);
+                
+                const textbeeResponse = await fetch('https://api.textbee.dev/api/v1/gateway/devices/6a41e63277015dcde1c56458/send-sms', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-api-key': '06ca6c05-1b27-42d9-a52d-cb291596b6dd'
+                    },
+                    body: JSON.stringify({
+                        recipients: [normalizedPhone],
+                        message: smsText
+                    })
+                });
+                
+                const smsResult = await textbeeResponse.json();
+                console.log('Textbee Response:', smsResult);
+                
+                if (textbeeResponse.ok) {
+                    console.log('Lab test SMS sent successfully');
+                    return '\n✓ SMS notification sent to donor!';
+                } else {
+                    console.warn('SMS notification failed:', smsResult);
+                    return `\n⚠️ SMS failed: ${smsResult.message || 'Unknown error'}`;
+                }
+            } catch (smsError) {
+                console.error('Error sending lab test SMS:', smsError);
+                return `\n✗ SMS Error: ${smsError.message}`;
             }
         }
 

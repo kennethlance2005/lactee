@@ -303,6 +303,7 @@
                 barcode_id: batchCode,
                 donor_dtn: dtn,
                 full_name: donorName,
+                donor_name: donorName,
                 donor_program: donorProgram,
                 donor_program_label: programLabels[donorProgram] || donorProgram,
                 collection_date: date,
@@ -317,6 +318,37 @@
             };
 
             try {
+                // Look up donor profile to get contact number
+                console.log('Looking up donor with DTN:', dtn);
+                
+                const donorQuery = query(collection(db, 'Donor_Profiles'), where('dtn', '==', dtn));
+                const donorSnap = await getDocs(donorQuery);
+                
+                console.log('Donor query results:', donorSnap.size, 'documents found');
+                
+                if (!donorSnap.empty) {
+                    const donorData = donorSnap.docs[0].data();
+                    payload.contact_number = donorData.contact_number || donorData.phone || '';
+                    console.log('Found donor contact:', payload.contact_number);
+                    console.log('Donor data keys:', Object.keys(donorData));
+                } else {
+                    // If query fails, try to get ALL donors and manually find the match
+                    console.log('DTN query returned no results, trying fallback lookup...');
+                    const allDonorsSnap = await getDocs(collection(db, 'Donor_Profiles'));
+                    const matchingDonor = allDonorsSnap.docs.find(doc => {
+                        const data = doc.data();
+                        return data.dtn === dtn || data.DTN === dtn;
+                    });
+                    
+                    if (matchingDonor) {
+                        const donorData = matchingDonor.data();
+                        payload.contact_number = donorData.contact_number || donorData.phone || '';
+                        console.log('Found donor via fallback, contact:', payload.contact_number);
+                    } else {
+                        console.warn('No donor found with DTN:', dtn);
+                    }
+                }
+                
                 const batchRef = await addDoc(collection(db, 'Milk_Batches'), payload);
                 await addDoc(collection(db, 'Laboratory_Verifications'), {
                     batch_id: batchCode,
