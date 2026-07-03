@@ -338,7 +338,7 @@
                 const phoneNum = batchData.contact_number || batchData.phone || batchData.contact || batchData.phone_number;
                 
                 if (!phoneNum) {
-                    return '\n⚠️ No phone number found';
+                    return 'No phone number found';
                 }
                 
                 const phoneDigits = phoneNum.toString().replace(/\D/g, '');
