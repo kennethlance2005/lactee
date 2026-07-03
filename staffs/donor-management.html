@@ -86,33 +86,49 @@
 
     <script type="module">
         import { db } from '../assets/js/firebase-config.js';
-        import { ensureAnonymousAuth, updateStaffNameDisplay, bindStaffLogout } from '../assets/js/staff-utils.js';
-        import { collection, getDocs, doc, updateDoc } from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js';
+        import { updateStaffNameDisplay, bindStaffLogout } from '../assets/js/staff-utils.js';
+        // Consolidated Firestore imports
+        import { collection, getDocs, doc, updateDoc, getDoc } from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js';
+        // Added Firebase Auth imports
+        import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js';
         import '../assets/js/batch-utils.js';
 
+        const auth = getAuth();
+
+        // Standardized Authentication Check
+        function ensureStaffAccess() {
+            return new Promise((resolve) => {
+                const unsubscribe = onAuthStateChanged(auth, (user) => {
+                    unsubscribe(); 
+                    if (user) {
+                        resolve(true);
+                    } else {
+                        console.error('User is not logged in.');
+                        window.location.href = 'login.html'; 
+                        resolve(false);
+                    }
+                });
+            });
+        }
+
         async function initDonorManagementPage() {
-            try {
-                await ensureAnonymousAuth();
-            } catch (error) {
-                console.error('Donor management auth failed:', error);
-            }
+            const isAuthorized = await ensureStaffAccess();
+            if (!isAuthorized) return;
 
             updateStaffNameDisplay();
             bindStaffLogout();
-            loadDonors();
+            await loadDonors();
         }
 
-        document.addEventListener('DOMContentLoaded', initDonorManagementPage);
-
         async function loadDonors() {
-            try {
-                await ensureAnonymousAuth();
-            } catch (error) {
-                window.location.href = 'login.html';
-                return;
-            }
+            const isAuthorized = await ensureStaffAccess();
+            if (!isAuthorized) return;
+
             const pendingTbody = document.querySelector('#pending-table tbody');
             const activeTbody = document.querySelector('#active-table tbody');
+            
+            if (!pendingTbody || !activeTbody) return; // Safety check for DOM elements
+
             pendingTbody.innerHTML = ''; 
             activeTbody.innerHTML = '';
 
@@ -122,64 +138,121 @@
                 moms_act: "Mom's Act (Household-Based)"
             };
 
-            const snap = await getDocs(collection(db, "Donor_Profiles"));
-            
-            if(snap.empty) {
-                pendingTbody.innerHTML = '<tr><td colspan="5">No data found.</td></tr>';
-            }
-
-            snap.forEach(docSnap => {
-                const data = docSnap.data();
+            try {
+                const snap = await getDocs(collection(db, "Donor_Profiles"));
                 
-                const applicantName = data.full_name || `${data.first_name || ''} ${data.last_name || ''}`.trim() || 'N/A';
-                const programLabel = data.program_category_label || programLabelMap[data.program_category] || data.program_category;
-
-                if (data.screening_status === 'Passed') {
-                    activeTbody.innerHTML += `
-                        <tr>
-                            <td><strong>${data.dtn || 'N/A'}</strong></td>
-                            <td>${applicantName}</td>
-                            <td>${programLabel}</td>
-                            <td><span class="badge badge-passed">Cleared</span></td>
-                        </tr>
-                    `;
-                } else {
-                    pendingTbody.innerHTML += `
-                        <tr id="donor-${docSnap.id}">
-                            <td>${data.application_id || 'N/A'}</td>
-                            <td>${applicantName}</td>
-                            <td>${programLabel}</td>
-                            <td>${data.contact_number || 'N/A'}</td>
-                            <td>
-                                <button class="btn-primary" style="padding: 5px 10px;" onclick="clearDonor('${docSnap.id}')">Clear & Assign DTN</button>
-                            </td>
-                        </tr>
-                    `;
+                if(snap.empty) {
+                    pendingTbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No data found.</td></tr>';
+                    activeTbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">No data found.</td></tr>';
+                    return;
                 }
-            });
+
+                snap.forEach(docSnap => {
+                    const data = docSnap.data();
+                    
+                    const applicantName = data.full_name || `${data.first_name || ''} ${data.last_name || ''}`.trim() || 'N/A';
+                    const programLabel = data.program_category_label || programLabelMap[data.program_category] || data.program_category;
+
+                    if (data.screening_status === 'Passed') {
+                        activeTbody.innerHTML += `
+                            <tr>
+                                <td><strong>${data.dtn || 'N/A'}</strong></td>
+                                <td>${applicantName}</td>
+                                <td>${programLabel}</td>
+                                <td><span class="badge badge-passed">Cleared</span></td>
+                            </tr>
+                        `;
+                    } else {
+                        pendingTbody.innerHTML += `
+                            <tr id="donor-${docSnap.id}">
+                                <td>${data.application_id || 'N/A'}</td>
+                                <td>${applicantName}</td>
+                                <td>${programLabel}</td>
+                                <td>${data.contact_number || 'N/A'}</td>
+                                <td>
+                                    <button class="btn-primary" style="padding: 5px 10px;" onclick="clearDonor('${docSnap.id}')">Clear & Assign DTN</button>
+                                </td>
+                            </tr>
+                        `;
+                    }
+                });
+            } catch (error) {
+                console.error("Error loading donors:", error);
+                pendingTbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: red;">Error loading data from database.</td></tr>';
+                activeTbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: red;">Error loading data from database.</td></tr>';
+            }
         }
 
         window.clearDonor = async function(docId) {
             if(!confirm("Are you sure you want to clear this donor and issue a Tracking Number?")) return;
-            
+
             try {
-                // Generate a Donor Tracking Number (DTN)
+                const isAuthorized = await ensureStaffAccess();
+                if (!isAuthorized) return;
+
+                // Grab donor details we need for the SMS before/while updating
+                const donorSnap = await getDoc(doc(db, "Donor_Profiles", docId));
+                const donorData = donorSnap.exists() ? donorSnap.data() : {};
+
                 const newDtn = "DTN-" + Math.floor(100000 + Math.random() * 900000);
-                
+
                 await updateDoc(doc(db, "Donor_Profiles", docId), {
                     screening_status: 'Passed',
                     dtn: newDtn
                 });
-                
-                alert(`Donor Cleared! Assigned DTN: ${newDtn}`);
-                loadDonors(); // Reload the tables
+
+                // Fire the SMS notification — send directly to Textbee API
+                let smsMessage = '';
+                try {
+                    console.log('Sending SMS directly to Textbee API...');
+                    const phoneDigits = donorData.contact_number.toString().replace(/\D/g, '');
+                    const normalizedPhone = phoneDigits.startsWith('0') 
+                        ? `+63${phoneDigits.slice(1)}` 
+                        : phoneDigits.startsWith('63')
+                        ? `+${phoneDigits}`
+                        : `+${phoneDigits}`;
+                    
+                    const smsMessage_text = `Hi ${donorData.first_name || 'valued donor'}! Great news — your HMBMS donor application has been approved (DTN: ${newDtn}). Your contribution will help save lives!`;
+                    
+                    console.log(`To: ${normalizedPhone}, Message: ${smsMessage_text}`);
+                    
+                    const textbeeResponse = await fetch('https://api.textbee.dev/api/v1/gateway/devices/6a41e63277015dcde1c56458/send-sms', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'x-api-key': '06ca6c05-1b27-42d9-a52d-cb291596b6dd'
+                        },
+                        body: JSON.stringify({
+                            recipients: [normalizedPhone],
+                            message: smsMessage_text
+                        })
+                    });
+                    
+                    const smsResult = await textbeeResponse.json();
+                    console.log('Textbee Response:', smsResult);
+                    
+                    if (textbeeResponse.ok) {
+                        smsMessage = '\n✓ SMS approval notification sent!';
+                        console.log('SMS sent successfully');
+                    } else {
+                        smsMessage = `\n⚠️ SMS failed: ${smsResult.message || 'Unknown error'}`;
+                        console.warn('SMS notification failed:', smsResult);
+                    }
+                } catch (smsError) {
+                    smsMessage = `\n✗ SMS Error: ${smsError.message}`;
+                    console.error('Error sending SMS:', smsError);
+                }
+
+                alert(`Donor Cleared! Assigned DTN: ${newDtn}${smsMessage}`);
+                loadDonors(); // Reload the tables visually
             } catch (error) {
                 console.error("Error updating donor:", error);
                 alert("Failed to update donor status.");
             }
         };
 
-        loadDonors();
+        // Only trigger on load, removed the duplicate call
+        document.addEventListener('DOMContentLoaded', initDonorManagementPage);
     </script>
 </body>
 </html>

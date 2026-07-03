@@ -184,18 +184,46 @@
 
     <script type="module">
         import { db } from '../assets/js/firebase-config.js';
-        import { ensureAnonymousAuth, updateStaffNameDisplay, bindStaffLogout, getStaffDisplayId } from '../assets/js/staff-utils.js';
-        import { collection, addDoc, getDocs, updateDoc, deleteDoc, doc, serverTimestamp, query, orderBy, limit } from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js';
+        import { updateStaffNameDisplay, bindStaffLogout, getStaffDisplayId } from '../assets/js/staff-utils.js';
+        // Notice the 'where' function is included in this import list
+        import { collection, addDoc, getDocs, updateDoc, deleteDoc, doc, serverTimestamp, query, orderBy, limit, where } from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js';
+        import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js';
         import '../assets/js/batch-utils.js';
 
         const intakeForm = document.getElementById('intake_form');
         const batchMessage = document.getElementById('batch-message');
+        const auth = getAuth(); 
+        
+        // Input variables for the auto-fill feature
+        const dtnInput = document.getElementById('donor_dtn');
+        const nameInput = document.getElementById('donor_name');
+        const programInput = document.getElementById('donor_program');
+
+        // --- Standardized Authentication Check ---
+        function ensureStaffAccess() {
+            return new Promise((resolve) => {
+                const unsubscribe = onAuthStateChanged(auth, (user) => {
+                    unsubscribe(); 
+                    if (user) {
+                        resolve(true);
+                    } else {
+                        batchMessage.textContent = 'Authentication failed. Please log in to a staff account.';
+                        batchMessage.style.color = '#dc2626';
+                        resolve(false);
+                    }
+                }, (error) => {
+                    console.error('Authentication error:', error);
+                    resolve(false);
+                });
+            });
+        }
 
         async function initBatchProcessingPage() {
-            try {
-                await ensureAnonymousAuth();
-            } catch (error) {
-                console.error('Batch processing page auth failed:', error);
+            const isAuthorized = await ensureStaffAccess();
+            if (!isAuthorized) {
+                console.error('User is not logged in.');
+                window.location.href = 'login.html'; 
+                return;
             }
             updateStaffNameDisplay();
             bindStaffLogout();
@@ -212,27 +240,54 @@
             return `${donorPart}-${datePart}-${uniqueSuffix}`;
         }
 
-        async function ensureStaffAccess() {
-            try {
-                await ensureAnonymousAuth();
-                return true;
-            } catch (error) {
-                console.error('Authentication failed:', error);
-                batchMessage.textContent = 'Authentication failed. Please enable anonymous sign-in in Firebase Authentication.';
-                batchMessage.style.color = '#dc2626';
-                return false;
-            }
-        }
-
         document.addEventListener('DOMContentLoaded', initBatchProcessingPage);
 
+        // --- NEW: Donor Auto-Fill Logic ---
+        dtnInput.addEventListener('blur', async function() {
+            const dtn = dtnInput.value.trim();
+            if (!dtn) return; 
+
+            try {
+                batchMessage.textContent = 'Locating donor profile...';
+                batchMessage.style.color = '#38BDF8';
+
+                // Ensure 'donor_dtn' matches the exact field name in your database
+                const q = query(collection(db, 'Donor_Profiles'), where('donor_dtn', '==', dtn));
+                const snap = await getDocs(q);
+
+                if (!snap.empty) {
+                    const donorData = snap.docs[0].data();
+                    
+                    nameInput.value = donorData.full_name || donorData.donor_name || '';
+                    if (donorData.donor_program) {
+                        programInput.value = donorData.donor_program;
+                    }
+
+                    batchMessage.textContent = `Donor details for ${dtn} auto-filled successfully.`;
+                    batchMessage.style.color = '#10B981';
+                } else {
+                    batchMessage.textContent = `No approved donor found with DTN: ${dtn}`;
+                    batchMessage.style.color = '#F59E0B';
+                    nameInput.value = '';
+                    programInput.value = '';
+                }
+            } catch (error) {
+                console.error('Error fetching donor:', error);
+                batchMessage.textContent = 'Error verifying donor. Check console for details.';
+                batchMessage.style.color = '#DC2626';
+            }
+        });
+
+        // --- Batch Submission Logic ---
         intakeForm.addEventListener('submit', async function (e) {
             e.preventDefault();
             batchMessage.textContent = '';
+            
             if (!(await ensureStaffAccess())) return;
-            const dtn = document.getElementById('donor_dtn').value.trim();
-            const donorName = document.getElementById('donor_name').value.trim();
-            const donorProgram = document.getElementById('donor_program').value;
+            
+            const dtn = dtnInput.value.trim();
+            const donorName = nameInput.value.trim();
+            const donorProgram = programInput.value;
             const date = document.getElementById('collection_date').value;
             const volume = document.getElementById('volume').value;
             const batchCode = generateBatchCode(dtn, date);
@@ -285,15 +340,14 @@
             }
         });
 
-        // Update processing state UI removed; state updates handled from other staff pages
-
+        // --- Fetch and Display Recent Batches ---
         async function loadBatches() {
             if (!(await ensureStaffAccess())) return;
             const q = query(collection(db, 'Milk_Batches'), orderBy('created_at', 'desc'), limit(12));
             const snap = await getDocs(q);
             const tbody = document.getElementById('batch-list-body');
             if (snap.empty) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">No batches found yet.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No batches found yet.</td></tr>';
                 return;
             }
             tbody.innerHTML = snap.docs.slice(0, 12).map(docSnap => {
@@ -313,7 +367,7 @@
             }).join('');
         }
 
-        // Remove a batch document from Firestore with confirmation
+        // --- Remove Batch Logic ---
         window.removeBatch = async function(batchDocId) {
             if (!confirm('Are you sure you want to permanently remove this batch? This action cannot be undone.')) return;
             try {
@@ -327,7 +381,44 @@
             }
         }
 
-        loadBatches();
+        // --- NEW: Donor Auto-Fill Logic ---
+        dtnInput.addEventListener('blur', async function() {
+            const dtn = dtnInput.value.trim();
+            if (!dtn) return; 
+
+            try {
+                batchMessage.textContent = 'Locating donor profile...';
+                batchMessage.style.color = '#38BDF8';
+
+                // Adjusted to match your exact field name 'dtn' from image_ce19ec.jpg
+                const q = query(collection(db, 'Donor_Profiles'), where('dtn', '==', dtn));
+                const snap = await getDocs(q);
+
+                if (!snap.empty) {
+                    const donorData = snap.docs[0].data();
+                    
+                    // Auto-fill full name
+                    nameInput.value = donorData.full_name || '';
+                    
+                    // Adjusted to match your exact field name 'program_category' from image_ce19ec.jpg
+                    if (donorData.program_category) {
+                        programInput.value = donorData.program_category;
+                    }
+
+                    batchMessage.textContent = `Donor details for ${dtn} auto-filled successfully.`;
+                    batchMessage.style.color = '#10B981';
+                } else {
+                    batchMessage.textContent = `No approved donor found with DTN: ${dtn}`;
+                    batchMessage.style.color = '#F59E0B';
+                    nameInput.value = '';
+                    programInput.value = '';
+                }
+            } catch (error) {
+                console.error('Error fetching donor:', error);
+                batchMessage.textContent = 'Error verifying donor. Check console for details.';
+                batchMessage.style.color = '#DC2626';
+            }
+        });
     </script>
 </body>
 </html>

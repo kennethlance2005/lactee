@@ -162,7 +162,7 @@ function buildMessage(payload, type = 'mother-request') {
   }
 
   if (type === 'donor-stored') {
-    return `Hello ${payload.first_name || 'valued donor'}, your donor screening has passed and your milk has been stored safely in the bank.`;
+    return `Hi ${payload.first_name || 'valued donor'}! Great news — your HMBMS donor application has been approved (DTN: ${payload.dtn || 'N/A'}). Your contribution will help save lives!`;
   }
 
   return `Lactee request received for ${payload.infant_name || 'your infant'}. We will contact you shortly.`;

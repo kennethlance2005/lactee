@@ -101,7 +101,7 @@
         import { db } from "../assets/js/firebase-config.js";
         import { ensureAnonymousAuth, updateStaffNameDisplay, bindStaffLogout, getStaffDisplayId } from "../assets/js/staff-utils.js";
         import "../assets/js/batch-utils.js";
-        import { collection, getDocs, doc, updateDoc, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
+        import { collection, getDocs, doc, updateDoc, addDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 
         let pendingBatchesCache = [];
 
@@ -235,7 +235,7 @@
             document.getElementById('stage-filter').addEventListener('change', filterBatches);
         }
 
-        window.updateLab = async function(docId) {
+       window.updateLab = async function(docId) {
             const selectedStage = document.getElementById(`stage_${docId}`).value;
             const result = document.getElementById(`status_${docId}`).value;
 
@@ -244,7 +244,7 @@
             }
 
             try {
-                await ensureAnonymousAuth();
+                await ensureAnonymousAuth(); 
 
                 const newState = result === 'Passed' ? 'Passed' : 'Failed';
                 const displayStatus = result === 'Passed' ? 'Passed' : 'Failed';
@@ -275,8 +275,27 @@
                     timestamp: serverTimestamp()
                 });
 
+                // 4. NEW: Send to Inventory if moving to Storage and Passed
+                if (selectedStage === 'Storage' && result === 'Passed') {
+                    // Grab the existing batch details from the table cache
+                    const batchData = pendingBatchesCache.find(b => b.id === docId);
+                    
+                    if (batchData) {
+                        // Write selected data into the Safe_Inventory collection
+                        await setDoc(doc(db, "Safe_Inventory", docId), {
+                            batch_id: batchData.batch_id || batchData.barcode_id || docId,
+                            full_name: batchData.full_name || batchData.donor_name || 'N/A',
+                            donor_dtn: batchData.donor_dtn || 'N/A',
+                            volume_ml: batchData.volume_ml || batchData.volume || 0,
+                            status: 'Available',
+                            entered_inventory_at: serverTimestamp()
+                        });
+                        console.log(`Batch ${docId} transferred to Safe_Inventory.`);
+                    }
+                }
+
                 document.getElementById(`row-${docId}`)?.remove();
-                alert(`Batch ${docId} successfully marked as ${result}.`);
+                alert(`Batch ${docId} successfully marked as ${result} and updated.`);
             } catch (error) {
                 console.error("Error updating lab result:", error);
                 alert("An error occurred while saving the verification. Check console for details.");

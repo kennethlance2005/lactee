@@ -79,24 +79,25 @@
                             
                             <div class="row g-3">
                                 <div class="col-md-6">
-                                    <label for="mother_name" class="form-label">Parent/Guardian's First Name *</label>
-                                    <input type="text" id="mother_name" name="mother_name" class="form-control" required>
+                                    <label for="mother_first_name" class="form-label">Parent/Guardian's First Name *</label>
+                                    <input type="text" id="mother_first_name" name="mother_first_name" class="form-control" required>
                                 </div>
                                 <div class="col-md-6">
                                     <label for="mother_last_name" class="form-label">Parent/Guardian's Last Name *</label>
-                                    <input type="text" id="mother_name" name="mother_name" class="form-control" required>
+                                    <input type="text" id="mother_last_name" name="mother_last_name" class="form-control" required>
                                 </div>
                             </div>
 
                             <div class="row g-3 mt-1">
                                 <div class="col-md-6">
-                                    <label for="infant_name" class="form-label">Infant's First Name *</label>
-                                    <input type="text" id="infant_name" name="infant_name" class="form-control" required>
+                                    <label for="infant_first_name" class="form-label">Infant's First Name *</label>
+                                    <input type="text" id="infant_first_name" name="infant_first_name" class="form-control" required>
                                 </div>
                                 <div class="col-md-6 d-flex align-items-center">
-                                    <div class="col-md-6">
-                                        <label for="infant_name" class="form-label">Infant's Last Name *</label>
-                                        <input type="text" id="infant_name" name="infant_name" class="form-control" required>
+                                    <!-- Removed the extra nested col-md-6 div here to keep the layout consistent with the row above -->
+                                    <div class="w-100">
+                                        <label for="infant_last_name" class="form-label">Infant's Last Name *</label>
+                                        <input type="text" id="infant_last_name" name="infant_last_name" class="form-control" required>
                                     </div>
                                 </div>
                             </div>
@@ -131,9 +132,7 @@
                             </div>
                         </fieldset>
 
-                        <!-- Required documents removed -->
-
-                        <button type="submit" class="btn btn-primary w-100 mt-4 py-2 fw-bold">Submit Request & Documents</button>
+                        <button type="submit" class="btn btn-primary w-100 mt-4 py-2 fw-bold">Submit Request</button>
                         <p id="form-message" class="text-center mt-3 fw-bold"></p>
                     </form>
                 </div>

@@ -101,6 +101,7 @@
                         <th>Infant Name</th>
                         <th>Vol (mL)</th>
                         <th>Status</th>
+                        <th>Action</th>
                     </tr>
                 </thead>
                 <tbody id="requests-tbody">
@@ -125,26 +126,45 @@
 
     <script type="module">
         import { db } from '../assets/js/firebase-config.js';
-        import { ensureAnonymousAuth, updateStaffNameDisplay, bindStaffLogout } from '../assets/js/staff-utils.js';
+        import { updateStaffNameDisplay, bindStaffLogout } from '../assets/js/staff-utils.js';
         import { collection, query, orderBy, onSnapshot, doc, updateDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js';
+        import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js';
 
+        const auth = getAuth();
         const tableBody = document.getElementById('requests-tbody');
         const loader = document.getElementById('loader');
         let unsubscribe = null;
 
+        // Standardized Authentication Check
+        function ensureStaffAccess() {
+            return new Promise((resolve) => {
+                const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+                    unsubscribeAuth(); 
+                    if (user) {
+                        resolve(true);
+                    } else {
+                        console.error('User is not logged in.');
+                        window.location.href = 'login.html'; 
+                        resolve(false);
+                    }
+                });
+            });
+        }
+
         // Function to fetch and display requests (real-time)
-        window.loadRequests = function() {
-            // If there's an existing listener, detach it first
+        window.loadRequests = async function() {
+            const isAuthorized = await ensureStaffAccess();
+            if (!isAuthorized) return;
+
             if (typeof unsubscribe === 'function') {
                 unsubscribe();
                 unsubscribe = null;
             }
 
-            tableBody.innerHTML = ''; // Clear table
+            tableBody.innerHTML = ''; 
             loader.style.display = 'block';
 
             try {
-                // Query Firestore, ordering by newest first
                 const q = query(collection(db, 'Milk_Inquiries'), orderBy('created_at', 'desc'));
 
                 unsubscribe = onSnapshot(q, (querySnapshot) => {
@@ -152,16 +172,16 @@
                     tableBody.innerHTML = '';
 
                     if (querySnapshot.empty) {
-                        tableBody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 2rem;">No milk requests found.</td></tr>';
+                        tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 2rem;">No milk requests found.</td></tr>';
                         return;
                     }
 
-                    querySnapshot.forEach((document) => {
-                        const data = document.data();
-                        const docId = document.id;
+                    querySnapshot.forEach((documentSnap) => {
+                        const data = documentSnap.data();
+                        const docId = documentSnap.id;
 
-                        // Format the timestamp securely
-                        let dateString = "N/A";
+                        // Secure timestamp handling (handles the split-second local write delay)
+                        let dateString = "Just now";
                         if (data.created_at) {
                             const dateObj = data.created_at.toDate();
                             dateString = dateObj.toLocaleDateString() + ' ' + dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
@@ -172,33 +192,24 @@
                         if (data.status === 'Rejected') badgeClass = 'badge-rejected';
 
                         const formDetails = data.form_details || {};
-                        const parentName = formDetails.mother_name || data.mother_name || 'N/A';
+                        // Build Parent Full Name
+                        const mFirst = formDetails.mother_first_name || '';
+                        const mLast = formDetails.mother_last_name || '';
+                        const fallbackMother = formDetails.mother_name || data.mother_name || '';
+                        const parentName = (mFirst || mLast) ? `${mFirst} ${mLast}`.trim() : (fallbackMother || 'N/A');
+
                         const contactNumber = formDetails.contact_number || data.contact_number || 'N/A';
-                        const infantName = formDetails.infant_name || data.infant_name || 'N/A';
+
+                        // Build Infant Full Name
+                        const iFirst = formDetails.infant_first_name || '';
+                        const iLast = formDetails.infant_last_name || '';
+                        const fallbackInfant = formDetails.infant_name || data.infant_name || '';
+                        const infantName = (iFirst || iLast) ? `${iFirst} ${iLast}`.trim() : (fallbackInfant || 'N/A');
                         const diagnosis = formDetails.medical_diagnosis || data.medical_diagnosis || 'No diagnosis provided';
                         const requestedVolume = formDetails.requested_volume || data.requested_volume || 'N/A';
                         const nicuBadge = (formDetails.is_nicu || data.is_nicu) ? `<span style="color: #EF4444; font-weight: bold; font-size: 0.8rem;">(NICU)</span>` : '';
 
-                        const documents = Array.isArray(data.documents) ? data.documents : [];
-                        const prescriptionDoc = documents.find(item => item.kind === 'prescription') || null;
-                        const idDoc = documents.find(item => item.kind === 'parent_id') || null;
 
-                        const buildDocumentLink = (doc) => {
-                            const documentUrl = doc?.data_url || doc?.url || data.prescription_url || data.parent_id_url || null;
-                            if (!documentUrl) {
-                                return '<span style="color: #94A3B8;">No file</span>';
-                            }
-
-                            const isImage = doc?.mime_type?.startsWith('image/');
-                            if (isImage) {
-                                return `<a href="${documentUrl}" target="_blank" title="Open image"><img src="${documentUrl}" alt="Document preview" style="max-width: 80px; max-height: 60px; object-fit: cover; border-radius: 4px;" /></a>`;
-                            }
-
-                            return `<a href="${documentUrl}" target="_blank" style="color: #2563EB;">View</a>`;
-                        };
-
-                        const rxLink = buildDocumentLink(prescriptionDoc);
-                        const idLink = buildDocumentLink(idDoc);
 
                         const tr = document.createElement('tr');
                         tr.innerHTML = `
@@ -212,7 +223,6 @@
                                 <span style="font-size: 0.8rem; color: #64748B;">${diagnosis}</span>
                             </td>
                             <td><strong>${requestedVolume}</strong></td>
-                            <td>${rxLink} | ${idLink}</td>
                             <td><span class="badge ${badgeClass}" id="status-${docId}">${data.status}</span></td>
                             <td>
                                 <button class="btn-sm btn-approve" onclick="updateStatus('${docId}', 'Approved')" ${data.status !== 'Pending' ? 'disabled style="opacity: 0.5;"' : ''}>Approve</button>
@@ -221,10 +231,9 @@
                         `;
                         tableBody.appendChild(tr);
                     });
-
                 }, (error) => {
                     console.error('Realtime listener error:', error);
-                    loader.innerHTML = '<span style="color: #DC2626;">Error loading data. Check console for details or verify Firestore rules.</span>';
+                    loader.innerHTML = '<span style="color: #DC2626;">Error loading data. Check permissions.</span>';
                 });
 
             } catch (error) {
@@ -233,49 +242,32 @@
             }
         };
 
-        // Function to update the status in Firestore
         window.updateStatus = async function(docId, newStatus) {
             const confirmAction = confirm(`Are you sure you want to mark this request as ${newStatus}?`);
             if (!confirmAction) return;
-
             try {
-                // Update the document in Firestore
+                const isAuthorized = await ensureStaffAccess();
+                if (!isAuthorized) return;
+
                 const docRef = doc(db, 'Milk_Inquiries', docId);
                 await updateDoc(docRef, {
                     status: newStatus,
                     updated_at: serverTimestamp()
                 });
-
-                // Instead of reloading the whole page, just update the UI visually for speed
-                const statusBadge = document.getElementById(`status-${docId}`);
-                statusBadge.textContent = newStatus;
-                statusBadge.className = `badge ${newStatus === 'Approved' ? 'badge-approved' : 'badge-rejected'}`;
-                
-                // Disable the buttons in this row
-                const buttons = statusBadge.closest('tr').querySelectorAll('button');
-                buttons.forEach(btn => {
-                    btn.disabled = true;
-                    btn.style.opacity = '0.5';
-                });
-
             } catch (error) {
                 console.error("Error updating status: ", error);
-                alert("Failed to update status. Do you have the correct Firestore write permissions?");
+                alert("Failed to update status. Check console for details.");
             }
         };
 
         document.addEventListener('DOMContentLoaded', async () => {
-            try {
-                await ensureAnonymousAuth();
-            } catch (e) {
-                console.warn('Anonymous sign-in failed for staff page:', e);
-            }
+            const isAuthorized = await ensureStaffAccess();
+            if (!isAuthorized) return;
 
             updateStaffNameDisplay();
             bindStaffLogout();
             loadRequests();
         });
-
     </script>
 </body>
 </html>
